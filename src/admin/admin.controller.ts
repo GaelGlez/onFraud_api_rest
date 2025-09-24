@@ -5,7 +5,7 @@ import { ApiOperation, ApiProperty, ApiTags } from "@nestjs/swagger";
 export class UpdateUserDto {
     id: number;
     email: string;
-    name: string;
+    full_name: string;
 }
 
 @Controller('admin')
@@ -27,7 +27,7 @@ export class AdminController {
         const user = await this.userService.findUserById(id);
         if (!user) return null;
         return {
-            name: user.name, 
+            full_name: user.full_name, 
             email: user.email
         };
     }
@@ -37,7 +37,7 @@ export class AdminController {
         const users = await this.userService.findAllUsers();
         if (!users) return null;
         return users.map(user => ({
-            name: user.name,
+            full_name: user.full_name,
             email: user.email
         }));
     }

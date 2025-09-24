@@ -7,7 +7,7 @@ import { DbService } from "src/db/db.service";
 export type User = {
     id: number;
     email: string;
-    name: string;
+    full_name: string;
     password_hash: string;
     salt: string;
 };
@@ -16,14 +16,14 @@ export type User = {
 export class UsersRepository{
     constructor(private readonly db: DbService) {}
 
-    async createUser(email:string, name:string, password:string): Promise<User | null>{
-        const sql= `INSERT INTO users (email, name, password_hash, salt) 
-        VALUES ('${email}', '${name}', '${password}', 'mysalt')`;
+    async createUser(email:string, full_name:string, password:string): Promise<User | null>{
+        const sql= `INSERT INTO users (email, full_name, password_hash, salt) 
+        VALUES ('${email}', '${full_name}', '${password}', 'mysalt')`;
         await this.db.getPool().query(sql);
         return {
             id: 1,
             email,
-            name,
+            full_name,
             password_hash: 'hashed_password',
             salt: 'mysalt',
         };

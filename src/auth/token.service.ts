@@ -4,7 +4,7 @@ import { JwtService } from "@nestjs/jwt";
 export type UserProfile = {
     id: number;
     email: string;
-    name: string;
+    full_name: string;
 }
 
 export type AccessPayload = {

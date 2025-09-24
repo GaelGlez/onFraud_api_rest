@@ -7,11 +7,11 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
 
     onModuleInit(): void {
         this.pool = createPool({
-            port: 3306,
-            host: 'localhost',
-            user: 'root',
-            password: 'Fridayabi2005',
-            database: 'demo_452',
+            port: 3306, // No cambiar
+            host: 'localhost', // Dirección de tu servidor MySQL (si es local, déjalo como está)
+            user: 'root', // El usuario de tu base de datos (en caso de que no sea root, cámbialo)
+            password: 'Fridayabi2005', // Cambia esto por la contraseña de tu usuario root
+            database: 'onfraud', // Nombre de la base de datos MySQL
         });
     }
     onModuleDestroy() {
