@@ -31,7 +31,11 @@ export class UserService {
         return isValid ? user : null;
     }
 
-    async updateUser(email:string, name:string){
-        
+    async findAllUsers() {
+        return this.usersRepository.findAllUsers();
     }
+
+    /*async updateUser(email:string, name:string){
+
+    }*/
 }

@@ -42,4 +42,18 @@ export class UsersRepository{
         const result = rows as User[];
         return result[0] || null;
     }
+
+    async findAllUsers(): Promise<User[]> {
+        const sql = `SELECT * FROM users`;
+        const [rows] = await this.db.getPool().query(sql);
+        const result = rows as User[];
+        return result || [];
+    }
+
+    /*async updateUser(email:string, name:string){
+        const sql = 'UPDATE users SET email=?, name=? WHERE id=?';
+        const [rows] = await this.db.getPool().query(sql);
+        const result = rows as User[];
+        return result[0] || null;
+    }*/
 }

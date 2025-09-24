@@ -1,4 +1,4 @@
-import { Body, Controller, Put, Get, Param } from "@nestjs/common";
+import { Body, Controller, Put, Get, Param  } from "@nestjs/common";
 import { UserService } from "../users/users.service";
 import { ApiOperation, ApiProperty, ApiTags } from "@nestjs/swagger";
 
@@ -22,9 +22,24 @@ export class AdminController {
             )
     }*/
 
-    @Get(':id')
+    @Get('users/:id')
     async findUserById(@Param('id') id: number){
-        return this.userService.findUserById(id)
+        const user = await this.userService.findUserById(id);
+        if (!user) return null;
+        return {
+            name: user.name, 
+            email: user.email
+        };
+    }
+
+    @Get('users')
+    async findAllUsers(@Param() params: any){
+        const users = await this.userService.findAllUsers();
+        if (!users) return null;
+        return users.map(user => ({
+            name: user.name,
+            email: user.email
+        }));
     }
 }
 
