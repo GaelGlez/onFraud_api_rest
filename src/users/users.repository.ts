@@ -50,10 +50,32 @@ export class UsersRepository{
         return result || [];
     }
 
-    /*async updateUser(email:string, name:string){
-        const sql = 'UPDATE users SET email=?, name=? WHERE id=?';
-        const [rows] = await this.db.getPool().query(sql);
-        const result = rows as User[];
-        return result[0] || null;
-    }*/
+    // Hace queries SQL, no lógica de negocio
+    async updateUser(id_users: number, email?: string, full_name?: string) {
+    // Construir dinámicamente SET solo con los campos que llegan
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (email !== undefined) {
+        fields.push('email = ?');
+        values.push(email);
+    }
+
+    if (full_name !== undefined) {
+        fields.push('full_name = ?');
+        values.push(full_name);
+    }
+
+    if (fields.length === 0) return null; // nada que actualizar
+
+    const sql = `UPDATE users SET ${fields.join(', ')} WHERE id_users = ?`;
+    values.push(id_users);
+
+    await this.db.getPool().query(sql, values);
+
+    // Traer el usuario actualizado
+    const [rows] = await this.db.getPool().query('SELECT id_users, full_name, email FROM users WHERE id_users = ?', [id_users]);
+    return (rows as User[])[0] || null;
+}
+
 }

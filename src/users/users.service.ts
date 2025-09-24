@@ -3,6 +3,8 @@
 import { Injectable } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { sha256 } from "src/util/hash/hash.util";
+import { UpdateUserDto } from "./dto/users.dto";
+
 
 @Injectable()
 export class UserService {
@@ -35,7 +37,16 @@ export class UserService {
         return this.usersRepository.findAllUsers();
     }
 
-    /*async updateUser(email:string, name:string){
+    // Centraliza la lógica de negocio, validaciones, reglas
+    async updateUser(userId: number, updateDto: UpdateUserDto) {
+        const { email, full_name } = updateDto;
 
-    }*/
+        // Logica que verifica que al menos hay un campo a actualizar
+        if (!email && !full_name) {
+            throw new Error("No hay campos para actualizar");
+        }
+        // Aqui se manda a llamar al repositorio para actualizar el usuario
+        return this.usersRepository.updateUser(userId, email, full_name);
+
+    }
 }
