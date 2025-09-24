@@ -5,7 +5,7 @@ import { DbService } from "src/db/db.service";
 
 
 export type User = {
-    id: number;
+    id_users: number;
     email: string;
     full_name: string;
     password_hash: string;
@@ -21,7 +21,7 @@ export class UsersRepository{
         VALUES ('${email}', '${full_name}', '${password}', 'mysalt')`;
         await this.db.getPool().query(sql);
         return {
-            id: 1,
+            id_users: 1,
             email,
             full_name,
             password_hash: 'hashed_password',
@@ -36,8 +36,8 @@ export class UsersRepository{
         return result[0] || null;
     }
 
-    async findUserById(id: number): Promise<User | null> {
-        const sql = `SELECT * FROM users WHERE id = ${id} LIMIT 1`;
+    async findUserById(id_users: number): Promise<User | null> {
+        const sql = `SELECT * FROM users WHERE id_users = ${id_users} LIMIT 1`;
         const [rows] = await this.db.getPool().query(sql);
         const result = rows as User[];
         return result[0] || null;

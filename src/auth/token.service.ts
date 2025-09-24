@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 
 export type UserProfile = {
-    id: number;
+    id_users: number;
     email: string;
     full_name: string;
 }
@@ -24,7 +24,7 @@ export class TokenService {
 
     async generateAccessToken(profile:UserProfile): Promise<string> {
         return this.jwtService.signAsync({
-            sub:profile.id.toString(),
+            sub:profile.id_users.toString() ,
             type:"access",
             profile
         } satisfies AccessPayload,
@@ -37,7 +37,7 @@ export class TokenService {
     }
     async generateRefreshToken(profile:UserProfile):Promise<string>{
         return this.jwtService.signAsync({
-            sub:profile.id.toString(),
+            sub:profile.id_users.toString(),
             type:"refresh",
         } satisfies RefreshPayload,
         {
