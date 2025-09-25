@@ -1,12 +1,8 @@
 import { Body, Controller, Put, Get, Param  } from "@nestjs/common";
 import { UserService } from "../users/users.service";
 import { ApiOperation, ApiProperty, ApiTags } from "@nestjs/swagger";
+import { UpdateUserDto } from "../users/dto/users.dto";
 
-export class UpdateUserDto {
-    id: number;
-    email: string;
-    full_name: string;
-}
 
 @Controller('admin')
 export class AdminController {
@@ -40,6 +36,17 @@ export class AdminController {
             full_name: user.full_name,
             email: user.email
         }));
+    }
+
+    @Put('users/:id')
+    async updateUser(@Param('id') userId: number, @Body() updateDto: UpdateUserDto) {
+        const updateUser = await this.userService.updateUser(userId, updateDto);
+
+        if (!updateUser) return null;
+        return {
+            full_name: updateUser.full_name,
+            email: updateUser.email
+        };
     }
 }
 

@@ -5,7 +5,7 @@ import { DbService } from "src/db/db.service";
 
 
 export type User = {
-    id_users: number;
+    id: number;
     email: string;
     full_name: string;
     password_hash: string;
@@ -21,7 +21,7 @@ export class UsersRepository{
         VALUES ('${email}', '${full_name}', '${password}', 'mysalt')`;
         await this.db.getPool().query(sql);
         return {
-            id_users: 1,
+            id: 1,
             email,
             full_name,
             password_hash: 'hashed_password',
@@ -36,8 +36,8 @@ export class UsersRepository{
         return result[0] || null;
     }
 
-    async findUserById(id_users: number): Promise<User | null> {
-        const sql = `SELECT * FROM users WHERE id_users = ${id_users} LIMIT 1`;
+    async findUserById(id: number): Promise<User | null> {
+        const sql = `SELECT * FROM users WHERE id = ${id} LIMIT 1`;
         const [rows] = await this.db.getPool().query(sql);
         const result = rows as User[];
         return result[0] || null;
@@ -51,7 +51,7 @@ export class UsersRepository{
     }
 
     // Hace queries SQL, no lógica de negocio
-    async updateUser(id_users: number, email?: string, full_name?: string) {
+    async updateUser(id: number, email?: string, full_name?: string) {
     // Construir dinámicamente SET solo con los campos que llegan
     const fields: string[] = [];
     const values: any[] = [];
@@ -68,13 +68,13 @@ export class UsersRepository{
 
     if (fields.length === 0) return null; // nada que actualizar
 
-    const sql = `UPDATE users SET ${fields.join(', ')} WHERE id_users = ?`;
-    values.push(id_users);
+    const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ?`;
+    values.push(id);
 
     await this.db.getPool().query(sql, values);
 
     // Traer el usuario actualizado
-    const [rows] = await this.db.getPool().query('SELECT id_users, full_name, email FROM users WHERE id_users = ?', [id_users]);
+    const [rows] = await this.db.getPool().query('SELECT id, full_name, email FROM users WHERE id = ?', [id]);
     return (rows as User[])[0] || null;
 }
 
