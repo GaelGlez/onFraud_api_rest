@@ -5,9 +5,10 @@ import { TokenService } from "./token.service";
 import { UserService } from "src/users/users.service";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import type { AuthenticatedRequest } from "src/common/interfaces/authenticated-request";
-import { ApiBearerAuth, ApiResponse } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiProperty } from "@nestjs/swagger";
+import { loginUserDto, refreshUserDto } from "./dto/auth.dto";
 
-
+@ApiTags('Modulo de Autenticacion') // Agrupa los endpoints de este controlador bajo el tag "Modulo de Autenticacion"
 @Controller("auth")
 export class AuthController {
     constructor(
@@ -15,8 +16,10 @@ export class AuthController {
         private readonly userService: UserService,
     ){}
 
+    @ApiOperation({summary: 'Login de usuario'}) 
     @Post("login")
-    async login(@Body() loginDto: {email:string, password:string}) {
+    async login(@Body() loginDto: loginUserDto) {
+    //async login(@Body() loginDto: {email:string, password:string}) {
         const user= await this.userService.validateUser(loginDto.email, loginDto.password);
         if(user){
             const token= await this.tokenService.generateAccessToken(user);
@@ -26,8 +29,10 @@ export class AuthController {
         return { error: "Invalid credentials" };
     }
 
+    @ApiOperation({summary: 'Refresh Token'}) 
     @Post("refresh")
-    async refresh(@Body() refreshDto: { token: string }) {
+    async refresh(@Body() refreshDto: refreshUserDto) {
+    //async refresh(@Body() refreshDto: { token: string }) {
         const payload= await this.tokenService.verifyRefreshToken(refreshDto.token);
         if (payload) {
             const user = await this.userService.findUserById(Number(payload.sub));
@@ -39,12 +44,13 @@ export class AuthController {
         return { error: "Invalid refresh token" };
     }
 
+    @ApiOperation({summary: 'Obtener perfil del usuario'})
     @Get("profile")
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth() // Indica que este endpoint requiere autenticación con Bearer token
     @ApiResponse({ status: 201, description: 'Perfil del usuario obtenido correctamente.' })
     @ApiResponse({ status: 401, description: 'No autorizado.' })
     getProfile(@Req() req: AuthenticatedRequest) {
-        return {profile:req.user.profile}
+        return { profile: req.user.profile };
     }
 }

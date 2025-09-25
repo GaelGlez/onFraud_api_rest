@@ -1,4 +1,4 @@
-import { AccessPayload } from "src/auth/token.service";
+import { AccessPayload } from "src/auth/dto/auth.dto";
 import { Request } from "express";
 
 export interface AuthenticatedUser{

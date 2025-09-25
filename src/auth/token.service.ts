@@ -1,22 +1,6 @@
 import { Injectable } from "@nestjs/common";    
 import { JwtService } from "@nestjs/jwt";
-
-export type UserProfile = {
-    id: number;
-    email: string;
-    full_name: string;
-}
-
-export type AccessPayload = {
-    sub:string; //user id
-    type:"access",
-    profile:UserProfile
-}
-
-export type RefreshPayload = {
-    sub:string; //user id
-    type:"refresh",
-}
+import { UserProfile, AccessPayload, RefreshPayload } from "./dto/auth.dto";
 
 @Injectable()
 export class TokenService {
