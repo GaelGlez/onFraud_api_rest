@@ -1,32 +1,31 @@
 /* eslint-disable prettier/prettier */
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, ConflictException } from "@nestjs/common";
 import { DbService } from "src/db/db.service";
-
-
-export type User = {
-    id: number;
-    email: string;
-    full_name: string;
-    password_hash: string;
-    salt: string;
-};
+import { User } from "./dto/users.dto";
 
 @Injectable()
 export class UsersRepository{
     constructor(private readonly db: DbService) {}
 
     async createUser(email:string, full_name:string, password:string): Promise<User | null>{
-        const sql= `INSERT INTO users (email, full_name, password_hash, salt) 
-        VALUES ('${email}', '${full_name}', '${password}', 'mysalt')`;
-        await this.db.getPool().query(sql);
-        return {
-            id: 1,
-            email,
-            full_name,
-            password_hash: 'hashed_password',
-            salt: 'mysalt',
-        };
+        try {
+            const sql= `INSERT INTO users (email, full_name, password_hash, salt) 
+            VALUES ('${email}', '${full_name}', '${password}', 'mysalt')`;
+            await this.db.getPool().query(sql);
+            return {
+                id: 1,
+                email,
+                full_name,
+                password_hash: 'hashed_password',
+                salt: 'mysalt',
+            };
+        } catch (err: any) {
+        if (err.code === 'ER_DUP_ENTRY') {
+            throw new ConflictException('El email ya está registrado');
+        }
+        throw err;
+    }
     }
 
     async findUserByEmail(email:string): Promise<User | null>{

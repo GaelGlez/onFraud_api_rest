@@ -20,7 +20,7 @@ export class AuthController {
     @Post("login")
     async login(@Body() loginDto: loginUserDto) {
     //async login(@Body() loginDto: {email:string, password:string}) {
-        const user= await this.userService.validateUser(loginDto.email, loginDto.password);
+        const user = await this.userService.validateUser(loginDto);
         if(user){
             const token= await this.tokenService.generateAccessToken(user);
             const refreshToken= await this.tokenService.generateRefreshToken(user);

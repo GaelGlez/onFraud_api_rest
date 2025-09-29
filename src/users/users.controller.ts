@@ -18,11 +18,7 @@ export class UsersController {
     @ApiOperation({summary: 'Crear un nuevo usuario'}) // Descripción de la operación para Swagger
     @Post()
     async createUser(@Body() createUserDto: CreateUserDto) {
-        return this.userService.createUser(
-            createUserDto.email,
-            createUserDto.full_name,
-            createUserDto.password,
-        );
+        return this.userService.createUser(createUserDto);
     }
 
     //El controller recibe los datos que el usuario quiere cambiar. Pasa 'userId' y 'updateDto' al service

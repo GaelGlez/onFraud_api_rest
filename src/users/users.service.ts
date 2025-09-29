@@ -3,33 +3,34 @@
 import { Injectable } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { sha256 } from "src/util/hash/hash.util";
-import { UpdateUserDto } from "./dto/users.dto";
+import { UpdateUserDto, CreateUserDto } from "./dto/users.dto";
+import { loginUserDto } from "src/auth/dto/auth.dto";
 
 
 @Injectable()
 export class UserService {
     constructor(private readonly usersRepository: UsersRepository) {}
 
-    async createUser(email: string, name: string, password: string) {
-        console.log("Aqui cifraremos la contraseña");
-        const hashed_password= sha256(password);
-        return this.usersRepository.createUser(email, name, hashed_password);
+    async createUser(createUserDto: CreateUserDto) {
+        // Aquí ciframos la contraseña
+        const hashed_password= sha256(createUserDto.password);
+        return this.usersRepository.createUser(createUserDto.email, createUserDto.full_name, hashed_password);
     }
 
     async findUserById(id: number) {
         return this.usersRepository.findUserById(id);
     }
 
-    async validateUser(email:string, password:string){
-        const user = await this.usersRepository.findUserByEmail(email);
+    async validateUser(loginDto: loginUserDto) {
+        const user = await this.usersRepository.findUserByEmail(loginDto.email);
         if (!user) {
             return null;
         }
-        console.log(user);
+        /*console.log(user);
         console.log("Password : "+ password);
         console.log("Password Hash : "+ user.password_hash);
-        console.log("Hashed Password : "+ sha256(password));
-        const isValid = user.password_hash === sha256(password);
+        console.log("Hashed Password : "+ sha256(loginDto.password));*/
+        const isValid = user.password_hash === sha256(loginDto.password);
         return isValid ? user : null;
     }
 

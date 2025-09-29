@@ -6,10 +6,12 @@ import { UsersModule } from './users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { FileModule } from './files/file.module';
+
 
 
 @Module({
-  imports: [DbModule, UsersModule, AuthModule, AdminModule, JwtModule.register({
+  imports: [DbModule, UsersModule, AuthModule, AdminModule, FileModule, JwtModule.register({
     global: true,
     //secret: process.env.JWT_SECRET,
     secret: "supersecret"
