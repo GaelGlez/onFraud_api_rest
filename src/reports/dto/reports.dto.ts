@@ -36,3 +36,31 @@ export class CreateReportDto {
     @ApiProperty({ type: [String], required: false })
     evidences?: string[];
 }
+
+// reports.dto.ts 
+export class UpdateReportDto { 
+    @ApiProperty({ required: false }) 
+    @IsOptional() 
+    @IsString() 
+    title?: string; 
+
+    @ApiProperty({ required: false }) 
+    @IsOptional() 
+    @IsString() 
+    description?: string; 
+
+    @ApiProperty({ required: false }) 
+    @IsOptional() 
+    @IsUrl() 
+    url?: string; 
+
+    @ApiProperty({ required: false, example: 2 }) 
+    @IsOptional() 
+    @IsInt() 
+    category_id?: number; 
+    
+    @ApiProperty({ required: false, example: 1 }) 
+    @IsOptional() 
+    @IsInt() 
+    status_id?: number; 
+} 
