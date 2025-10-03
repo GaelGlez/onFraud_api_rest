@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUrl, IsInt } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, IsInt, IsArray } from 'class-validator';
 
 export class CreateReportDto {
   @ApiProperty({ example: 'Oferta Cancún All Inclusive', description: 'Título del reporte', required: true })
@@ -29,9 +29,12 @@ export class CreateReportDto {
   @IsString()
   description!: string;
 
-  @ApiProperty({ type: [String], required: false })
-  evidences?: string[];
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  evidences?: string[]; // aquí definimos evidencias como array de strings opcional
 }
+
 
 export class UpdateReportDto {
   @ApiProperty({ required: false })

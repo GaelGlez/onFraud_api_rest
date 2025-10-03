@@ -7,13 +7,20 @@ import { ReportsService } from './reports.service';
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
-  @Post()
+  /*@Post()
   async createReport(
     @Body() createReportDto: CreateReportDto,
     @Req() req: any,
   ): Promise<Report> {
     const userId: number = req?.user?.id ?? 1; // reemplaza 1 por tu lógica real de auth
     return this.reportsService.create(createReportDto, userId);
+  }*/
+
+    @Post()
+  create(@Body() dto: CreateReportDto, @Req() req) {
+    // si usas auth: const userId = req.user.id;
+    const userId = req.user?.id || null;
+    return this.reportsService.create(dto, userId);
   }
 
   @Put(':id')

@@ -18,7 +18,7 @@ export class FileController {
         })
     }))
     uploadFile(@UploadedFile() file: Express.Multer.File) {
-        return { fileKey: ` ${file.filename}`,
+        return { fileKey: `${file.filename}`,
             url: `http://localhost:3000/public/uploads/${file.filename}` };
     }
 }

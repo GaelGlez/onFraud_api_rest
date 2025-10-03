@@ -8,18 +8,18 @@ export class ReportsRepository {
   constructor(private readonly db: DbService) {}
 
   // Crear un reporte
-  async createReport(dto: CreateReportDto, userId: number): Promise<Report> {
+  /*async createReport(dto: CreateReportDto, userId: number): Promise<Report> {
     const sql = `
       INSERT INTO reports (user_id, category_id, status_id, title, url, description)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
     const params = [
-      userId,
+      userId || null,
       dto.category_id,
       dto.status_id ?? 1,
       dto.title,
       dto.url ?? null,
-      dto.description ?? null,
+      dto.description,
     ];
 
     try {
@@ -37,6 +37,30 @@ export class ReportsRepository {
       }
       throw err;
     }
+  }*/
+
+    async createReport(dto: CreateReportDto, userId: number) {
+    const [result]: any = await this.db.getPool().query(
+      `INSERT INTO Reports (user_id, category_id, status_id, title, url, description)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        userId || null,
+        dto.category_id,
+        1, // status_id = 1 -> pendiente
+        dto.title,
+        dto.url || null,
+        dto.description,
+      ],
+    );
+    return result.insertId;
+  }
+
+  async addEvidence(reportId: number, filePath: string, fileType: string) {
+    await this.db.getPool().query(
+      `INSERT INTO Reports_evidences (reports_id, file_path, file_type)
+       VALUES (?, ?, ?)`,
+      [reportId, filePath, fileType],
+    );
   }
 
   // Buscar un reporte por id
