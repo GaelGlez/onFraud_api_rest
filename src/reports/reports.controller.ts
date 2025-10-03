@@ -1,43 +1,90 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Req, UseGuards, Delete, Query } from '@nestjs/common';
 import { CreateReportDto, UpdateReportDto, Report } from './dto/reports.dto';
 import { ReportsService } from './reports.service';
+import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+
 
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
-  /*@Post()
-  async createReport(
-    @Body() createReportDto: CreateReportDto,
-    @Req() req: any,
-  ): Promise<Report> {
-    const userId: number = req?.user?.id ?? 1; // reemplaza 1 por tu lógica real de auth
-    return this.reportsService.create(createReportDto, userId);
-  }*/
-
-    @Post()
-  create(@Body() dto: CreateReportDto, @Req() req) {
-    // si usas auth: const userId = req.user.id;
-    const userId = req.user?.id || null;
-    return this.reportsService.create(dto, userId);
+  // ====== CREACIÓN ======
+  // Crear reporte como usuario autenticado
+  @ApiOperation({ summary: 'Crear un reporte como usuario autenticado' })
+  @Post()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  createReport(@Body() dto: CreateReportDto, @Req() req) {
+    const userId = Number(req.user.userId);  // <- ahora sí existe
+    return this.reportsService.createReport(dto, userId);
   }
 
-  @Put(':id')
-  async updateReport(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateReportDto: UpdateReportDto,
-  ): Promise<Report> {
-    return this.reportsService.update(id, updateReportDto);
+  // Crear reporte anónimo (sin autenticación)
+  @ApiOperation({ summary: 'Crear un reporte anónimo' })
+  @Post('anonymous')
+  createAnonymousReport(@Body() dto: CreateReportDto) {
+    return this.reportsService.createReport(dto, 0); // userId = 0 para anónimo
   }
 
+  // ====== LECTURA ======
+  // Listar reportes con filtros
+  @Get()
+  async listReports(
+    @Query('category_id') categoryId?: number,
+    @Query('status_id') statusId?: number,
+    @Query('url') url?: string,
+    @Query('q') keyword?: string
+  ): Promise<Report[]> {
+    return this.reportsService.findAllReports({ categoryId, statusId, url, keyword });
+  }
+
+  // Detalle de un reporte
   @Get(':id')
   async getReport(@Param('id', ParseIntPipe) id: number): Promise<Report> {
-    return this.reportsService.findOne(id);
+    return this.reportsService.findReportById(id);
   }
 
-  @Get()
-  async listReports(): Promise<Report[]> {
-    return this.reportsService.findAll();
+  // ====== EDICIÓN ======
+  @Put(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async updateReport(@Param('id', ParseIntPipe) id: number, @Body() updateReportDto: UpdateReportDto, @Req() req,): Promise<Report> {
+    const userId = Number(req.user.userId);
+    return this.reportsService.updateReport(id, updateReportDto, userId);
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async deleteReport(@Param('id', ParseIntPipe) id: number, @Req() req,) {
+    const userId = Number(req.user.userId);
+    return this.reportsService.deleteReport(id, userId);
+  }
+
+  // ====== EVIDENCIAS ======
+  @Post(':id/evidences')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async addEvidence(
+    @Param('id', ParseIntPipe) reportId: number,
+    @Body('files') files: string[], // nombres que ya se subieron en /files/upload
+    @Req() req,
+  ) {
+    const userId = Number(req.user.userId);
+    return this.reportsService.addEvidence(reportId, files, userId);
+  }
+
+  @Delete(':id/evidences/:evidenceId')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async deleteEvidence(
+    @Param('id', ParseIntPipe) reportId: number,
+    @Param('evidenceId', ParseIntPipe) evidenceId: number,
+    @Req() req,
+  ) {
+    const userId = Number(req.user.userId);
+    return this.reportsService.deleteEvidence(reportId, evidenceId, userId);
   }
 }

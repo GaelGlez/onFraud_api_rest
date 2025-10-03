@@ -16,7 +16,7 @@ export class TokenService {
             //secret:process.env.JWT_SECRET,
             //expiresIn:process.env.JWT_EXPIRES
             secret:"supersecret",
-            expiresIn:"1m"
+            expiresIn:"15m"
         })
     }
     async generateRefreshToken(profile:UserProfile):Promise<string>{

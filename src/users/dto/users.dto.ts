@@ -1,10 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 
-
-
 export class UpdateUserDto {
-    @ApiProperty({example:"gael@example.com", required:false}) // Descripción de la propiedad para Swagger
+    @ApiProperty({example:"gael@example.com", required:false})
     @IsOptional()
     @IsEmail({}, { message: "Debe ser un email válido" })
     email?: string; // opcional
@@ -14,21 +12,6 @@ export class UpdateUserDto {
     @IsString({ message: "Debe ser un string" })    
     full_name?: string;  // opcional
 }
-
-export class CreateUserDto {
-    @ApiProperty({example:"gael@example.com", required:true}) // Descripción de la propiedad para Swagger
-    @IsEmail({}, { message: "Debe ser un email válido" })
-    email: string;
-
-    @ApiProperty({example:"Gael", required:true})
-    @IsString({ message: "Debe ser un string" })
-    full_name: string;
-
-    @ApiProperty({example:"123456", required:true})
-    @IsString({ message: "Debe ser un string" })
-    @MinLength(6, { message: "La contraseña debe tener al menos 6 caracteres" })
-    password: string;
-};
 
 export class User {
     @ApiProperty({example:1, required:true})

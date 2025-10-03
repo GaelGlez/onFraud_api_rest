@@ -7,42 +7,11 @@ import { CreateReportDto, UpdateReportDto, Report } from './dto/reports.dto';
 export class ReportsRepository {
   constructor(private readonly db: DbService) {}
 
-  // Crear un reporte
-  /*async createReport(dto: CreateReportDto, userId: number): Promise<Report> {
-    const sql = `
-      INSERT INTO reports (user_id, category_id, status_id, title, url, description)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    const params = [
-      userId || null,
-      dto.category_id,
-      dto.status_id ?? 1,
-      dto.title,
-      dto.url ?? null,
-      dto.description,
-    ];
-
-    try {
-      const [result]: any = await this.db.getPool().query(sql, params);
-      const insertedId = result.insertId;
-
-      const [rows] = await this.db.getPool().query(
-        'SELECT * FROM reports WHERE id = ? LIMIT 1',
-        [insertedId],
-      );
-      return (rows as Report[])[0];
-    } catch (err: any) {
-      if (err?.code === 'ER_DUP_ENTRY') {
-        throw new ConflictException('Reporte duplicado (conflicto de clave única)');
-      }
-      throw err;
-    }
-  }*/
-
+    // ===== CREAR =====
     async createReport(dto: CreateReportDto, userId: number) {
     const [result]: any = await this.db.getPool().query(
       `INSERT INTO Reports (user_id, category_id, status_id, title, url, description)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?)`,
       [
         userId || null,
         dto.category_id,
@@ -55,28 +24,93 @@ export class ReportsRepository {
     return result.insertId;
   }
 
+  // ===== EVIDENCIAS =====
   async addEvidence(reportId: number, filePath: string, fileType: string) {
     await this.db.getPool().query(
       `INSERT INTO Reports_evidences (reports_id, file_path, file_type)
-       VALUES (?, ?, ?)`,
+      VALUES (?, ?, ?)`,
       [reportId, filePath, fileType],
     );
   }
 
-  // Buscar un reporte por id
-  async findById(id: number): Promise<Report | null> {
+  async findEvidenceById(id: number) {
+    const [rows]: any = await this.db
+      .getPool()
+      .query('SELECT * FROM reports_evidences WHERE id = ? LIMIT 1', [id]);
+
+  if (!rows[0]) return null;
+  
+  const row = rows[0]
+
+    // Asegura que estos campos son numéricos
+    return {
+      ...row,
+      id: Number(row.id),
+      report_id: Number(row.reports_id), // ojo al nombre real en la tabla
+    };
+  }
+
+  async deleteEvidence(id: number) {
+    await this.db.getPool().query('DELETE FROM reports_evidences WHERE id = ?', [id]);
+    return { message: 'Evidencia eliminada correctamente' };
+  }
+
+  // ===== CONSULTAS DE REPORTES =====
+  async findByReportId(id: number): Promise<Report | null> {
     const [rows] = await this.db
       .getPool()
       .query('SELECT * FROM reports WHERE id = ? LIMIT 1', [id]);
     return (rows as Report[])[0] ?? null;
   }
 
-  // Listar todos los reportes
-  async findAll(): Promise<Report[]> {
-    const [rows] = await this.db.getPool().query('SELECT * FROM reports ORDER BY id DESC');
+  async findAllReports(filters: {
+    categoryId?: number;
+    statusId?: number;
+    url?: string;
+    keyword?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Report[]> {
+    const conditions: string[] = [];
+    const values: any[] = [];
+
+    if (filters.categoryId) {
+      conditions.push('category_id = ?');
+      values.push(filters.categoryId);
+    }
+    if (filters.statusId) {
+      conditions.push('status_id = ?');
+      values.push(filters.statusId);
+    }
+    if (filters.url) {
+      conditions.push('url = ?');
+      values.push(filters.url);
+    }
+    if (filters.keyword) {
+      conditions.push('(title LIKE ? OR description LIKE ?)');
+      values.push(`%${filters.keyword}%`, `%${filters.keyword}%`);
+    }
+
+    let sql = 'SELECT * FROM reports';
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    sql += ' ORDER BY id DESC';
+
+    if (filters.limit) {
+      sql += ' LIMIT ?';
+      values.push(filters.limit);
+    }
+    if (filters.offset) {
+      sql += ' OFFSET ?';
+      values.push(filters.offset);
+    }
+
+    const [rows] = await this.db.getPool().query(sql, values);
     return rows as Report[];
   }
 
+  // ===== ACTUALIZAR =====
   // Actualizar dinámicamente un reporte
   async updateReport(id: number, dto: UpdateReportDto): Promise<Report | null> {
     const set: string[] = [];
@@ -104,7 +138,7 @@ export class ReportsRepository {
     }
 
     if (set.length === 0) {
-      return await this.findById(id);
+      return await this.findByReportId(id);
     }
 
     const sql = `UPDATE reports SET ${set.join(', ')}, updated_at = NOW() WHERE id = ?`;
@@ -112,10 +146,12 @@ export class ReportsRepository {
 
     await this.db.getPool().query(sql, values);
 
-    const [rows] = await this.db.getPool().query(
-      'SELECT * FROM reports WHERE id = ? LIMIT 1',
-      [id],
-    );
-    return (rows as Report[])[0] ?? null;
+    return this.findByReportId(id);
+  }
+
+  // ===== ELIMINAR =====
+  async deleteReport(id: number) {
+    await this.db.getPool().query('DELETE FROM reports WHERE id = ?', [id]);
+    return { message: 'Reporte eliminado correctamente' };
   }
 }

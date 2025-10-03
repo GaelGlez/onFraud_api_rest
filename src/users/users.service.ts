@@ -3,8 +3,8 @@
 import { Injectable } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { sha256 } from "src/util/hash/hash.util";
-import { UpdateUserDto, CreateUserDto } from "./dto/users.dto";
-import { loginUserDto } from "src/auth/dto/auth.dto";
+import { UpdateUserDto } from "./dto/users.dto";
+import { loginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
 
 
 @Injectable()
@@ -26,10 +26,6 @@ export class UserService {
         if (!user) {
             return null;
         }
-        /*console.log(user);
-        console.log("Password : "+ password);
-        console.log("Password Hash : "+ user.password_hash);
-        console.log("Hashed Password : "+ sha256(loginDto.password));*/
         const isValid = user.password_hash === sha256(loginDto.password);
         return isValid ? user : null;
     }
