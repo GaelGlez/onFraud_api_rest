@@ -44,6 +44,19 @@ export class UserService {
         }
         // Aqui se manda a llamar al repositorio para actualizar el usuario
         return this.usersRepository.updateUser(userId, email, full_name);
-
     }
+
+    async validateAdmin(loginDto: loginUserDto) {
+    const user = await this.usersRepository.findUserByEmail(loginDto.email);
+    if (!user) return null;
+
+    const isValid = user.password_hash === sha256(loginDto.password);
+    if (!isValid) return null;
+
+    // ✅ Verificar rol de admin
+    if (!user.role) return null;
+
+    return user;
+}
+
 }

@@ -7,6 +7,13 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Habilitar CORS
+  app.enableCors({
+    origin: 'http://localhost:3000', // o '*' para permitir todos los orígenes
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true, // si envías cookies
+  });
   app.useStaticAssets(
     join(__dirname, "..", "public"),{
       prefix: "/public/"
@@ -22,6 +29,7 @@ async function bootstrap() {
     .setVersion('1.0').build(); // Versión del API
   const doc = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, doc); // <-- Aquí defines la ruta de Swagger
+  //await app.listen(process.env.PORT ?? 4000);
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

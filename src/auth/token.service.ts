@@ -13,10 +13,8 @@ export class TokenService {
             profile
         } satisfies AccessPayload,
         {
-            //secret:process.env.JWT_SECRET,
-            //expiresIn:process.env.JWT_EXPIRES
-            secret:"supersecret",
-            expiresIn:"15m"
+            secret:process.env.JWT_SECRET || 'supersecret',
+            expiresIn:process.env.JWT_EXPIRES || '15m'
         })
     }
     async generateRefreshToken(profile:UserProfile):Promise<string>{
@@ -25,16 +23,13 @@ export class TokenService {
             type:"refresh",
         } satisfies RefreshPayload,
         {
-            //secret:process.env.JWT_SECRET,
-            //expiresIn:process.env.JWT_REFRESH_EXPIRES
-            secret:"supersecret",
-            expiresIn:"7d"
+            secret:process.env.JWT_SECRET || 'supersecret',
+            expiresIn:process.env.JWT_REFRESH_EXPIRES || '7d'
         })
     }
     async verifyAccessToken(token:string):Promise<AccessPayload>{
         const payload = await this.jwtService.verifyAsync<AccessPayload>(token,{
-            //secret:process.env.JWT_SECRET
-            secret:"supersecret"
+            secret:process.env.JWT_SECRET || 'supersecret'
         });
         if(payload.type !== "access"){
             throw new Error("Invalid token type");
@@ -43,8 +38,7 @@ export class TokenService {
     }
     async verifyRefreshToken(token:string):Promise<RefreshPayload>{
         const payload = await this.jwtService.verifyAsync<RefreshPayload>(token,{
-            //secret:process.env.JWT_SECRET
-            secret:"supersecret"
+            secret:process.env.JWT_SECRET || 'supersecret'
         });
         if(payload.type !== "refresh"){
             throw new Error("Invalid token type");

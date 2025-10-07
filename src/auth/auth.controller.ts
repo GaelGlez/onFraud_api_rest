@@ -33,6 +33,22 @@ export class AuthController {
         return { error: "Invalid credentials" };
     }
 
+    // ✅ Login exclusivo para admin
+    @ApiOperation({ summary: 'Login de admin' })
+    @Post("admin/login")
+    async adminLogin(@Body() loginDto: loginUserDto) {
+        const admin = await this.userService.validateAdmin(loginDto);
+        if (!admin) {
+            return { error: "Credenciales inválidas o no tiene permisos de admin" };
+        }
+
+        const token = await this.tokenService.generateAccessToken(admin);
+        const refreshToken = await this.tokenService.generateRefreshToken(admin);
+
+        return { access_token: token, refresh_token: refreshToken };
+    }
+
+
     @ApiOperation({summary: 'Refresh Token'}) 
     @Post("refresh-token")
     async refresh(@Body() refreshDto: refreshUserDto) {

@@ -14,8 +14,7 @@ import { ReportsModule } from './reports/reports.module';
 @Module({
   imports: [DbModule, UsersModule, ReportsModule, AuthModule, AdminModule, FileModule, JwtModule.register({
     global: true,
-    //secret: process.env.JWT_SECRET,
-    secret: "supersecret"
+    secret: process.env.JWT_SECRET || 'supersecret',
   })],
   controllers: [AppController],
   providers: [AppService],
