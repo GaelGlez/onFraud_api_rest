@@ -26,4 +26,6 @@ export class User {
     password_hash: string;
     @ApiProperty({example:"$2b$10$abcdefghijklmnopqrstuv", required:true})
     salt: string;
+    @ApiProperty({example:1, required:true})
+    role: boolean; // 0=usuario, 1=admin
 };

@@ -21,6 +21,7 @@ export class UsersRepository{
                 full_name,
                 password_hash: 'hashed_password',
                 salt: 'mysalt',
+                role: false
             };
         } catch (err: any) {
         if (err.code === 'ER_DUP_ENTRY') {
