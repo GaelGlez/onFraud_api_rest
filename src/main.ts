@@ -29,7 +29,7 @@ async function bootstrap() {
     .setVersion('1.0').build(); // Versión del API
   const doc = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, doc); // <-- Aquí defines la ruta de Swagger
-  //await app.listen(process.env.PORT ?? 4000);
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 4000);
+  //await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

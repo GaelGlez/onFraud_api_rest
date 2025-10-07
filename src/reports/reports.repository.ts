@@ -91,7 +91,17 @@ export class ReportsRepository {
       values.push(`%${filters.keyword}%`, `%${filters.keyword}%`);
     }
 
-    let sql = 'SELECT * FROM reports';
+    let sql = `
+      SELECT r.*,
+            u.full_name AS user_name,
+            c.name AS category_name,
+            s.name AS status_name
+      FROM reports r
+      LEFT JOIN users u ON r.user_id = u.id
+      LEFT JOIN categories c ON r.category_id = c.id
+      LEFT JOIN statuses s ON r.status_id = s.id
+    `;
+
     if (conditions.length > 0) {
       sql += ' WHERE ' + conditions.join(' AND ');
     }
@@ -153,5 +163,12 @@ export class ReportsRepository {
   async deleteReport(id: number) {
     await this.db.getPool().query('DELETE FROM reports WHERE id = ?', [id]);
     return { message: 'Reporte eliminado correctamente' };
+  }
+
+  async updateReportStatus(id: number, statusId: number): Promise<Report | null> {
+    const sql = `UPDATE reports SET status_id = ?, updated_at = NOW() WHERE id = ?`;
+    const values = [statusId, id];
+    await this.db.getPool().query(sql, values);
+    return this.findByReportId(id);
   }
 }

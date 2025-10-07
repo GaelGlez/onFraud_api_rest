@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, NotFoundException, ForbiddenException  } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException  } from '@nestjs/common';
 import { ReportsRepository } from './reports.repository';
 import { CreateReportDto, UpdateReportDto, Report } from './dto/reports.dto';
 import * as fs from 'fs';
@@ -127,4 +127,13 @@ export class ReportsService {
 
     return this.reportsRepository.deleteEvidence(evidenceId);
   }
+
+  async updateReportStatus(reportId: number, statusId: number) {
+    const report = await this.reportsRepository.findByReportId(reportId);
+    if (!report) throw new NotFoundException(`Reporte con id ${reportId} no encontrado`);
+    if (report.status_id === statusId) throw new ConflictException(`El reporte ya está en estado ${statusId}`);
+    return this.reportsRepository.updateReportStatus(reportId, statusId);
+    
+  }
 }
+

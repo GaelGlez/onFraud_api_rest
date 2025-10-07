@@ -53,6 +53,16 @@ export class AdminController {
         const reports = await this.reportsService.findAllReports({ categoryId, statusId, url, keyword });
         return reports;
     }
+
+    @ApiOperation({summary: 'Actualizar estado de un reporte (Admin)'}) // Descripción de la operación para Swagger
+    @Put('reports/:id/status/:statusId')
+    async updateReportStatus(
+        @Param('id') reportId: number,
+        @Param('statusId') statusId: number) {
+        const report = await this.reportsService.findReportById(reportId);
+        if (!report) return null;
+        return this.reportsService.updateReportStatus(reportId, statusId);
+    }
 }
 
 
