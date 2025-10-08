@@ -3,6 +3,7 @@ import { UserService } from "../users/users.service";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UpdateUserDto } from "../users/dto/users.dto";
 import { ReportsService } from "../reports/reports.service";
+import { Delete } from "@nestjs/common/decorators";
 
 @ApiTags('Modulo de Administracion') // Agrupa los endpoints de este controlador bajo el tag "Modulo de Administracion"
 @Controller('admin')
@@ -63,6 +64,24 @@ export class AdminController {
         if (!report) return null;
         return this.reportsService.updateReportStatus(reportId, statusId);
     }
+
+    @ApiOperation({ summary: 'Ver detalle de un reporte (Admin)' })
+@Get('reports/:id')
+async getReportById(@Param('id') id: number) {
+    const report = await this.reportsService.findReportById(id);
+    if (!report) return null;
+    return report;
+}
+
+@ApiOperation({ summary: 'Eliminar reporte (Admin)' })
+@Delete('reports/:id')
+async deleteReport(@Param('id') id: number, @Query('userId') userId: number) {
+    const report = await this.reportsService.findReportById(id);
+    if (!report) return null;
+    await this.reportsService.deleteReport(id, userId);
+    return { message: `Reporte ${id} eliminado correctamente` };
+}
+
 }
 
 
