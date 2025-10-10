@@ -20,7 +20,7 @@ export class CreateReportDto {
   @ApiProperty({ example: 'https://comprasexpress.com/cancun' })
   @IsOptional()
   @IsUrl()
-  url?: string;
+  url!: string;
 
   @ApiProperty({
     example: 'Ofrecen paquete Cancún por $999, piden transferencia y no entregan comprobante…',
@@ -72,8 +72,8 @@ export interface Report {
   category_id: number;
   status_id: number;
   title: string;
-  url?: string | null;
+  url: string | null;
   description?: string | null;
-  created_at?: Date;
+  created_at: Date;
   updated_at?: Date;
 }

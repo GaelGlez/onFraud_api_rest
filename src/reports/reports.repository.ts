@@ -17,7 +17,7 @@ export class ReportsRepository {
         dto.category_id,
         1, // status_id = 1 -> pendiente
         dto.title,
-        dto.url || null,
+        dto.url,
         dto.description,
       ],
     );
