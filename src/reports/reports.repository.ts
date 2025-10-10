@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { CreateReportDto, UpdateReportDto, Report } from './dto/reports.dto';
 
