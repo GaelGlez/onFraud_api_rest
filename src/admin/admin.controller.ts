@@ -44,7 +44,9 @@ export class AdminController {
         };
     }
 
-    //Reportes
+    // DELETE /admin/users/:id
+
+    //Reportes ---------------------------------------------------
     @Get('reports')
     async getReports(
         @Query('category_id') categoryId?: number,
@@ -53,6 +55,14 @@ export class AdminController {
         @Query('q') keyword?: string) {
         const reports = await this.reportsService.findAllReports({ categoryId, statusId, url, keyword });
         return reports;
+    }
+
+    @ApiOperation({ summary: 'Ver detalle de un reporte (Admin)' })
+    @Get('reports/:id')
+    async getReportById(@Param('id') id: number) {
+        const report = await this.reportsService.findReportById(id);
+        if (!report) return null;
+        return report;
     }
 
     @ApiOperation({summary: 'Actualizar estado de un reporte (Admin)'}) // Descripción de la operación para Swagger
@@ -65,22 +75,14 @@ export class AdminController {
         return this.reportsService.updateReportStatus(reportId, statusId);
     }
 
-    @ApiOperation({ summary: 'Ver detalle de un reporte (Admin)' })
-@Get('reports/:id')
-async getReportById(@Param('id') id: number) {
-    const report = await this.reportsService.findReportById(id);
-    if (!report) return null;
-    return report;
-}
-
-@ApiOperation({ summary: 'Eliminar reporte (Admin)' })
-@Delete('reports/:id')
-async deleteReport(@Param('id') id: number, @Query('userId') userId: number) {
-    const report = await this.reportsService.findReportById(id);
-    if (!report) return null;
-    await this.reportsService.deleteReport(id, userId);
-    return { message: `Reporte ${id} eliminado correctamente` };
-}
+    @ApiOperation({ summary: 'Eliminar reporte (Admin)' })
+    @Delete('reports/:id')
+    async deleteReport(@Param('id') id: number, @Query('userId') userId: number) {
+        const report = await this.reportsService.findReportById(id);
+        if (!report) return null;
+        await this.reportsService.deleteReport(id, userId);
+        return { message: `Reporte ${id} eliminado correctamente` };
+    }
 
 }
 
