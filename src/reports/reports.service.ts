@@ -46,11 +46,17 @@ export class ReportsService {
     return this.reportsRepository.findAllReports(filters);
   }
 
+  // ===== LISTAR REPORTES DE UN USUARIO (incluye borrado lógico) =====
+  async findReportsByUser(userId: number): Promise<Report[]> {
+      console.log("REQ USER:", userId);
+    return this.reportsRepository.findReportsByUser(userId);
+  }
+
   // ===== DETALLE =====
-  async findReportById(id: number): Promise<Report> {
-    const report = await this.reportsRepository.findByReportId(id);
+  async findReportById(userId: number): Promise<Report> {
+    const report = await this.reportsRepository.findByReportId(userId);
     if (!report) {
-      throw new NotFoundException(`Reporte con id ${id} no encontrado`);
+      throw new NotFoundException(`Reporte con id ${userId} no encontrado`);
     }
     return report;
   }

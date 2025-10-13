@@ -4,6 +4,7 @@ import { CreateReportDto, UpdateReportDto, Report } from './dto/reports.dto';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import type { AuthenticatedRequest } from "src/common/interfaces/authenticated-request";
 
 
 @Controller('reports')
@@ -46,11 +47,21 @@ export class ReportsController {
     return this.reportsService.findReportById(id);
   }
 
+  // Listar reportes para el usuario autenticado (incluye borrado lógico)
+  @Get('user')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async listUserReports(@Req() req): Promise<Report[]> {
+    const userId = Number(req.user.userId); 
+    return this.reportsService.findReportsByUser(userId);
+}
+
+
   // ====== EDICIÓN ======
   @Put(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  async updateReport(@Param('id', ParseIntPipe) id: number, @Body() updateReportDto: UpdateReportDto, @Req() req,): Promise<Report> {
+  async updateReport(@Param('id', ParseIntPipe) id: number, @Body() updateReportDto: UpdateReportDto, @Req() req): Promise<Report> {
     const userId = Number(req.user.userId);
     return this.reportsService.updateReport(id, updateReportDto, userId);
   }

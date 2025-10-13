@@ -131,6 +131,23 @@ export class ReportsRepository {
     return rows as Report[];
   }
 
+  async findReportsByUser(userId: number): Promise<Report[]> {
+    const sql = `
+      SELECT r.*,
+            u.full_name AS user_name,
+            c.name AS category_name,
+            s.name AS status_name
+      FROM reports r
+      LEFT JOIN users u ON r.user_id = u.id
+      LEFT JOIN categories c ON r.category_id = c.id
+      LEFT JOIN statuses s ON r.status_id = s.id
+      WHERE r.user_id = ?
+    `;
+    const [rows] = await this.db.getPool().query(sql, [userId]);
+    const result = rows as Report[];
+    return result;
+  }
+
   // ===== ACTUALIZAR =====
   // Actualizar dinámicamente un reporte
   async updateReport(id: number, dto: UpdateReportDto): Promise<Report | null> {
