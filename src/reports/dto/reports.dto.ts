@@ -63,6 +63,7 @@ export class UpdateReportDto {
   status_id?: number;
 }
 
+
 /**
  * Interfaz que representa un registro en la tabla reports
  */

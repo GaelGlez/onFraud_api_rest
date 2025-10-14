@@ -48,8 +48,12 @@ export class ReportsService {
 
   // ===== LISTAR REPORTES DE UN USUARIO (incluye borrado lógico) =====
   async findReportsByUser(userId: number): Promise<Report[]> {
-      console.log("REQ USER:", userId);
     return this.reportsRepository.findReportsByUser(userId);
+  }
+
+  // ===== LISTAR REPORTES DE UN USUARIO POR STATUS =====
+  async findReportsByUserAndStatus(userId: number, statusId: number): Promise<Report[]> {
+    return this.reportsRepository.findReportsByUserAndStatus(userId, statusId);
   }
 
   // ===== DETALLE =====
