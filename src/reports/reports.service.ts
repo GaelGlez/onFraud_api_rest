@@ -46,14 +46,9 @@ export class ReportsService {
     return this.reportsRepository.findAllReports(filters);
   }
 
-  // ===== LISTAR REPORTES DE UN USUARIO (incluye borrado lógico) =====
-  async findReportsByUser(userId: number): Promise<Report[]> {
-    return this.reportsRepository.findReportsByUser(userId);
-  }
-
-  // ===== LISTAR REPORTES DE UN USUARIO POR STATUS =====
-  async findReportsByUserAndStatus(userId: number, statusId: number): Promise<Report[]> {
-    return this.reportsRepository.findReportsByUserAndStatus(userId, statusId);
+  // ===== LISTAR REPORTES DE UN USUARIO CON FILTRO DE STATUS =====
+  async findAllReportsUser(userId: number, filters: { statusId?: number }): Promise<Report[]> {
+    return this.reportsRepository.findAllReportsUser(userId, filters);
   }
 
   // ===== DETALLE =====

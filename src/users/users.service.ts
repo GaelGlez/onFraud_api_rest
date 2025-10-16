@@ -47,16 +47,16 @@ export class UserService {
     }
 
     async validateAdmin(loginDto: loginUserDto) {
-    const user = await this.usersRepository.findUserByEmail(loginDto.email);
-    if (!user) return null;
+        const user = await this.usersRepository.findUserByEmail(loginDto.email);
+        if (!user) return null;
 
-    const isValid = user.password_hash === sha256(loginDto.password);
-    if (!isValid) return null;
+        const isValid = user.password_hash === sha256(loginDto.password);
+        if (!isValid) return null;
 
-    // ✅ Verificar rol de admin
-    if (!user.role) return null;
+        // ✅ Verificar rol de admin
+        if (!user.role) return null;
 
-    return user;
-}
+        return user;
+    }
 
 }

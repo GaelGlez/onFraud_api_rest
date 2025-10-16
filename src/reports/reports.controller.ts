@@ -30,14 +30,7 @@ export class ReportsController {
   }
 
   // ====== LECTURA ======
-   // Listar reportes para el usuario autenticado
-  @Get('user')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  async listUserReports(@Req() req): Promise<Report[]> {
-    const userId = Number(req.user.userId);
-    return this.reportsService.findReportsByUser(userId);
-  }
+  
   // Listar reportes con filtros
   @Get()
   async listReports(
@@ -55,13 +48,16 @@ export class ReportsController {
     return this.reportsService.findReportById(id);
   }
 
-  // Detalle de reportes por status autenticado
-  @Get('user/status/:statusId')
+  // Listar reportes del usuario autenticado con filtro opcional por estado
+  @Get('user/report')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async listUserReportsByStatus(@Param('statusId', ParseIntPipe) statusId: number, @Req() req): Promise<Report[]> {
+  async listReportsUser(
+    @Req() req,
+    @Query('status_id') statusId?: number,
+  ): Promise<Report[]> {
     const userId = Number(req.user.userId);
-    return this.reportsService.findReportsByUserAndStatus(userId, statusId);
+    return this.reportsService.findAllReportsUser(userId, { statusId });
   }
 
   // ====== EDICIÓN ======
