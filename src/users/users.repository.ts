@@ -14,22 +14,23 @@ export class UsersRepository{
         try {
             const sql= `INSERT INTO users (email, full_name, password_hash, salt) 
             VALUES ('${email}', '${full_name}', '${password}', 'mysalt')`;
-            await this.db.getPool().query(sql);
+            const [result]: any = await this.db.getPool().query(sql, [email, full_name, password]);
             return {
-                id: 1,
+                id: result.insertId,
                 email,
                 full_name,
                 password_hash: 'hashed_password',
                 salt: 'mysalt',
                 role: false
             };
-        } catch (err: any) {
-        if (err.code === 'ER_DUP_ENTRY') {
-            throw new ConflictException('El email ya está registrado');
-        }
-        throw err;
+            } catch (err: any) {
+            if (err.code === 'ER_DUP_ENTRY') {
+                throw new ConflictException('El email ya está registrado');
+            }
+            throw err;
+        }   
     }
-    }
+
 
     async findUserByEmail(email:string): Promise<User | null>{
         const sql= `SELECT * FROM users WHERE email='${email}' LIMIT 1`;

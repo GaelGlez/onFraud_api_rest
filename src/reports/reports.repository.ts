@@ -25,11 +25,18 @@ export class ReportsRepository {
   }
 
   // ===== EVIDENCIAS =====
-  async addEvidence(reportId: number, filePath: string, fileType: string) {
+  async findEvidencesByReportId(reportId: number) {
+    const [rows]: any = await this.db
+      .getPool()
+      .query('SELECT * FROM reports_evidences WHERE reports_id = ?', [reportId]);
+    return rows;
+  }
+
+  async addEvidence(reportId: number, fileKey: string, filePath: string, fileType: string) {
     await this.db.getPool().query(
-      `INSERT INTO Reports_evidences (reports_id, file_path, file_type)
-      VALUES (?, ?, ?)`,
-      [reportId, filePath, fileType],
+      `INSERT INTO Reports_evidences (reports_id, file_key, file_path, file_type)
+      VALUES (?, ?, ?, ?)`,
+      [reportId, fileKey, filePath, fileType],
     );
   }
 

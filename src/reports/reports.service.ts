@@ -24,8 +24,10 @@ export class ReportsService {
 
         fs.renameSync(tmpPath, destPath);
 
+        const fileKey = path.basename(tmp); // o un UUID si prefieres
         await this.reportsRepository.addEvidence(
           reportId,
+          fileKey,
           `uploads/reports/${reportId}/${path.basename(tmp)}`,
           path.extname(tmp),
         );
@@ -87,6 +89,12 @@ export class ReportsService {
   }
 
    // ===== EVIDENCIAS =====
+  async getEvidences(reportId: number) {
+    const report = await this.reportsRepository.findByReportId(reportId);
+    if (!report) throw new NotFoundException(`Reporte con id ${reportId} no encontrado`);
+    return this.reportsRepository.findEvidencesByReportId(reportId);
+  }
+
   async addEvidence(reportId: number, files: string[], userId: number) {
     const report = await this.reportsRepository.findByReportId(reportId);
     if (!report) throw new NotFoundException(`Reporte con id ${reportId} no encontrado`);
@@ -102,8 +110,10 @@ export class ReportsService {
 
       fs.renameSync(tmpPath, destPath);
 
+      const fileKey = path.basename(tmp);
       await this.reportsRepository.addEvidence(
         reportId,
+        fileKey,
         `uploads/reports/${reportId}/${path.basename(tmp)}`,
         path.extname(tmp),
       );

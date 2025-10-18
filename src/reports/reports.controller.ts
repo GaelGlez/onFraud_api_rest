@@ -78,6 +78,11 @@ export class ReportsController {
   }
 
   // ====== EVIDENCIAS ======
+  @Get(':id/evidences')
+  async getEvidences(@Param('id', ParseIntPipe) reportId: number) {
+    return this.reportsService.getEvidences(reportId);
+  }
+  
   @Post(':id/evidences')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
