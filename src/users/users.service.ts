@@ -46,6 +46,19 @@ export class UserService {
         return this.usersRepository.updateUser(userId, email, full_name);
     }
 
+    async updatePassword(userId: number, updatePasswordDto: { oldPassword: string; newPassword: string; }) {
+        const user = await this.usersRepository.findUserById(userId);
+        if (!user) {
+            throw new Error("Usuario no encontrado");
+        }
+        const oldPasswordHash = sha256(updatePasswordDto.oldPassword);
+        if (user.password_hash !== oldPasswordHash) {
+            throw new Error("La contraseña antigua no coincide");
+        }
+        user.password_hash = sha256(updatePasswordDto.newPassword);
+        return this.usersRepository.updatePasswordUser(userId, user.password_hash);
+    }
+
     async validateAdmin(loginDto: loginUserDto) {
         const user = await this.usersRepository.findUserByEmail(loginDto.email);
         if (!user) return null;

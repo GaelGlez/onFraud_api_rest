@@ -13,6 +13,18 @@ export class UpdateUserDto {
     full_name?: string;  // opcional
 }
 
+export class UpdatePasswordDto {
+    @ApiProperty({example:"oldPassword123", required:true})
+    @IsString({ message: "Debe ser un string" })
+    @MinLength(9, { message: "La contraseña debe tener al menos 9 caracteres" })
+    oldPassword: string;
+
+    @ApiProperty({example:"newPassword123", required:true})
+    @IsString({ message: "Debe ser un string" })
+    @MinLength(9, { message: "La contraseña debe tener al menos 9 caracteres" })
+    newPassword: string;
+}
+
 export class User {
     @ApiProperty({example:1, required:true})
     id: number;

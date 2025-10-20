@@ -81,4 +81,9 @@ export class UsersRepository{
         return (rows as User[])[0] || null;
     }
 
+    async updatePasswordUser(id: number, newPasswordHash: string) {
+        const sql = `UPDATE users SET password_hash = ? WHERE id = ?`;
+        await this.db.getPool().query(sql, [newPasswordHash, id]);
+        return true;
+    }
 }
