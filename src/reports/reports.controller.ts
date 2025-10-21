@@ -48,10 +48,11 @@ export class ReportsController {
   }
 
   // Detalle de un reporte
-  @Get(':id')
+  // NO SE USA PARA NADA
+  /*@Get(':id')
   async getReport(@Param('id', ParseIntPipe) id: number): Promise<Report> {
     return this.reportsService.findReportById(id);
-  }
+  }*/
 
   // Listar reportes del usuario autenticado con filtro opcional por estado
   @Get('user/report')
@@ -66,13 +67,14 @@ export class ReportsController {
   }
 
   // ====== EDICIÓN ======
-  @Put(':id')
+  // No se usa en nada 
+  /*@Put(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async updateReport(@Param('id', ParseIntPipe) id: number, @Body() updateReportDto: UpdateReportDto, @Req() req): Promise<Report> {
     const userId = Number(req.user.userId);
     return this.reportsService.updateReport(id, updateReportDto, userId);
-  }
+  }*/
 
   @Delete(':id')
   @ApiBearerAuth()
@@ -88,7 +90,8 @@ export class ReportsController {
     return this.reportsService.getEvidences(reportId);
   }
   
-  @Post(':id/evidences')
+  // NO SE USA PARA NADA
+  /*@Post(':id/evidences')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async addEvidence(
@@ -98,9 +101,10 @@ export class ReportsController {
   ) {
     const userId = Number(req.user.userId);
     return this.reportsService.addEvidence(reportId, files, userId);
-  }
+  }*/
 
-  @Delete(':id/evidences/:evidenceId')
+  // NO SE USA PARA NADA
+  /*@Delete(':id/evidences/:evidenceId')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async deleteEvidence(
@@ -110,5 +114,5 @@ export class ReportsController {
   ) {
     const userId = Number(req.user.userId);
     return this.reportsService.deleteEvidence(reportId, evidenceId, userId);
-  }
+  }*/
 }

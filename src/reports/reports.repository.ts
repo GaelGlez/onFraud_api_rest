@@ -135,9 +135,16 @@ export class ReportsRepository {
       values.push(filters.url);
     }
     if (filters.keyword) {
-      conditions.push('(title LIKE ? OR description LIKE ?)');
-      values.push(`%${filters.keyword}%`, `%${filters.keyword}%`);
+      const keyword = filters.keyword.toLowerCase();
+      conditions.push(`(
+        LOWER(r.title) LIKE ? OR 
+        LOWER(r.description) LIKE ? OR 
+        LOWER(c.name) LIKE ? OR 
+        LOWER(r.url) LIKE ?
+      )`);
+      values.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
     }
+
 
     let sql = `
       SELECT r.*,
@@ -169,8 +176,8 @@ export class ReportsRepository {
   }
 
   // ===== ACTUALIZAR =====
-  // Actualizar dinámicamente un reporte
-  async updateReport(id: number, dto: UpdateReportDto): Promise<Report | null> {
+  // NO SE USA PARA NADA
+  /*async updateReport(id: number, dto: UpdateReportDto): Promise<Report | null> {
     const set: string[] = [];
     const values: any[] = [];
 
@@ -205,7 +212,7 @@ export class ReportsRepository {
     await this.db.getPool().query(sql, values);
 
     return this.findByReportId(id);
-  }
+  }*/
 
   // ===== ELIMINAR =====
   async deleteReport(id: number) {
