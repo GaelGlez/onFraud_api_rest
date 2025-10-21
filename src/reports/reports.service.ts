@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException, ForbiddenException, ConflictException  } from '@nestjs/common';
 import { ReportsRepository } from './reports.repository';
-import { CreateReportDto, UpdateReportDto, Report } from './dto/reports.dto';
+import { CreateReportDto, UpdateReportDto, Report, Categories } from './dto/reports.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -34,6 +34,11 @@ export class ReportsService {
       }
     }
     return this.reportsRepository.findByReportId(reportId);
+  }
+
+  // ===== LISTAR CATEGORÍAS =====
+  async findAllCategories(): Promise<Categories[]> {
+    return this.reportsRepository.findAllCategories();
   }
 
   // ===== LISTAR CON FILTROS =====
@@ -147,8 +152,8 @@ export class ReportsService {
     const report = await this.reportsRepository.findByReportId(reportId);
     if (!report) throw new NotFoundException(`Reporte con id ${reportId} no encontrado`);
     if (report.status_id === statusId) throw new ConflictException(`El reporte ya está en estado ${statusId}`);
-    return this.reportsRepository.updateReportStatus(reportId, statusId);
-    
+    return this.reportsRepository.updateReportStatus(reportId, statusId); 
   }
+
 }
 

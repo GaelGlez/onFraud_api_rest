@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { CreateReportDto, UpdateReportDto, Report } from './dto/reports.dto';
+import { CreateReportDto, UpdateReportDto, Report, Categories } from './dto/reports.dto';
 
 @Injectable()
 export class ReportsRepository {
@@ -218,5 +218,13 @@ export class ReportsRepository {
     const values = [statusId, id];
     await this.db.getPool().query(sql, values);
     return this.findByReportId(id);
+  }
+
+  // ===== LISTAR CATEGORÍAS =====
+  async findAllCategories(): Promise<Categories[]> {
+    const [rows]: any = await this.db
+      .getPool()
+      .query('SELECT * FROM categories ORDER BY name ASC');
+    return rows;
   }
 }

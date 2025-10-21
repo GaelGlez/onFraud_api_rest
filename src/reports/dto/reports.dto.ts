@@ -78,3 +78,8 @@ export interface Report {
   created_at: Date;
   updated_at?: Date;
 }
+
+export interface Categories {
+  id: number;
+  name: string;
+}

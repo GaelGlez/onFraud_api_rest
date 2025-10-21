@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Req, UseGuards, Delete, Query } from '@nestjs/common';
-import { CreateReportDto, UpdateReportDto, Report } from './dto/reports.dto';
+import { CreateReportDto, UpdateReportDto, Report, Categories } from './dto/reports.dto';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -30,6 +30,11 @@ export class ReportsController {
   }
 
   // ====== LECTURA ======
+  // Listar categorías
+  @Get('categories')
+  async listCategories(): Promise<Categories[]> {
+    return this.reportsService.findAllCategories();
+  }
   
   // Listar reportes con filtros
   @Get()
