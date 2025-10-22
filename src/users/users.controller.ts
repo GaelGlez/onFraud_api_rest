@@ -1,22 +1,21 @@
 /* eslint-disable prettier/prettier */
+import { Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UserService } from './users.service';
+import { UpdateUserDto, UpdatePasswordDto, User } from './dto/users.dto';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
-import { Body, Controller, Get, Post, Put, Req,UseGuards } from "@nestjs/common";
-import { UserService } from "./users.service";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiProperty } from "@nestjs/swagger";
-import { UpdateUserDto, UpdatePasswordDto } from "./dto/users.dto";
-import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
-
-@ApiTags('Modulo de Usuarios') // Agrupa los endpoints de este controlador bajo el tag "Modulo de Usuarios"
+@ApiTags('Usuarios')
 @Controller('users')
 export class UsersController {
-    constructor(
-        private readonly userService: UserService, 
-    ) {}
-    @ApiOperation({summary: 'Obtener perfil del usuario'})
-    @Get("profile")
+    constructor(private readonly userService: UserService) {}
+
+    // Obtener perfil del usuario autenticado
+    @ApiOperation({ summary: 'Obtener perfil del usuario autenticado' })
+    @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth() // Indica que este endpoint requiere autenticación con Bearer token
-    @ApiResponse({ status: 201, description: 'Perfil del usuario obtenido correctamente.' })
+    @Get('profile')
+    @ApiResponse({ status: 200, description: 'Perfil obtenido correctamente.', type: User })
     @ApiResponse({ status: 401, description: 'No autorizado.' })
     async getProfile(@Req() req) {
         const userId = Number(req.user.userId);
@@ -24,21 +23,27 @@ export class UsersController {
         return { profile: user };
     }
 
-    //El controller recibe los datos que el usuario quiere cambiar. Pasa 'userId' y 'updateDto' al service
-    // Recibe datos y token
-    @ApiOperation({ summary: 'Actualizar un usuario' })
-    @Put()
+    // Actualizar información del usuario
+    @ApiOperation({ summary: 'Actualizar datos del usuario' })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
+    @Put()
+    @ApiResponse({ status: 200, description: 'Usuario actualizado correctamente.' , type: UpdateUserDto })
+    @ApiResponse({ status: 400, description: 'Datos inválidos.' })
+    @ApiResponse({ status: 401, description: 'No autorizado.' })
     async updateUser(@Body() updateDto: UpdateUserDto, @Req() req) {
-        const userId = Number(req.user.userId);  // <- aquí
+        const userId = Number(req.user.userId);
         return this.userService.updateUser(userId, updateDto);
     }
 
+    // Actualizar contraseña
     @ApiOperation({ summary: 'Actualizar contraseña del usuario' })
-    @Put('password')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
+    @Put('password')
+    @ApiResponse({ status: 200, description: 'Contraseña actualizada correctamente.' })
+    @ApiResponse({ status: 400, description: 'Contraseña actual o nueva inválida.' })
+    @ApiResponse({ status: 401, description: 'No autorizado.' })
     async updatePassword(@Body() updatePasswordDto: UpdatePasswordDto, @Req() req) {
         const userId = Number(req.user.userId);
         return this.userService.updatePassword(userId, updatePasswordDto);

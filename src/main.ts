@@ -24,12 +24,19 @@ async function bootstrap() {
     forbidNonWhitelisted: true, // lanza error si llegan propiedades extras
     transform: true,       // transforma tipos automáticamente (string -> number, etc.)
   }));
-  const config = new DocumentBuilder().setTitle('API Documentation') // Título del API
-    .setDescription('Ejemplo documentación de un REST API en Swagger') // Descripción del API
-    .setVersion('1.0').build(); // Versión del API
+  const config = new DocumentBuilder()
+    .setTitle('onFraud Documentation') // Título del API
+    .setDescription('Documentación del API Rest onFraud en Swagger') // Descripción del API
+    .setVersion('1.0')// Versión del API
+    .addBearerAuth()
+    .build();
   const doc = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, doc); // <-- Aquí defines la ruta de Swagger
+  SwaggerModule.setup('docs-onfraud', app, doc); // <-- Aquí defines la ruta de Swagger
   await app.listen(process.env.PORT ?? 4000);
   //await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
+function addBearerAuth() {
+  throw new Error('Function not implemented.');
+}
+

@@ -4,7 +4,7 @@ import { Injectable } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { sha256 } from "src/util/hash/hash.util";
 import { UpdateUserDto } from "./dto/users.dto";
-import { loginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
+import { LoginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
 
 
 @Injectable()
@@ -12,7 +12,6 @@ export class UserService {
     constructor(private readonly usersRepository: UsersRepository) {}
 
     async createUser(createUserDto: CreateUserDto) {
-        // Aquí ciframos la contraseña
         const hashed_password= sha256(createUserDto.password);
         return this.usersRepository.createUser(createUserDto.email, createUserDto.full_name, hashed_password);
     }
@@ -21,7 +20,7 @@ export class UserService {
         return this.usersRepository.findUserById(id);
     }
 
-    async validateUser(loginDto: loginUserDto) {
+    async validateUser(loginDto: LoginUserDto) {
         const user = await this.usersRepository.findUserByEmail(loginDto.email);
         if (!user) {
             return null;
@@ -34,15 +33,12 @@ export class UserService {
         return this.usersRepository.findAllUsers();
     }
 
-    // Centraliza la lógica de negocio, validaciones, reglas
     async updateUser(userId: number, updateDto: UpdateUserDto) {
         const { email, full_name } = updateDto;
 
-        // Logica que verifica que al menos hay un campo a actualizar
         if (!email && !full_name) {
             throw new Error("No hay campos para actualizar");
         }
-        // Aqui se manda a llamar al repositorio para actualizar el usuario
         return this.usersRepository.updateUser(userId, email, full_name);
     }
 
@@ -59,14 +55,13 @@ export class UserService {
         return this.usersRepository.updatePasswordUser(userId, user.password_hash);
     }
 
-    async validateAdmin(loginDto: loginUserDto) {
+    async validateAdmin(loginDto: LoginUserDto) {
         const user = await this.usersRepository.findUserByEmail(loginDto.email);
         if (!user) return null;
 
         const isValid = user.password_hash === sha256(loginDto.password);
         if (!isValid) return null;
 
-        // ✅ Verificar rol de admin
         if (!user.role) return null;
 
         return user;

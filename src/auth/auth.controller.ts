@@ -1,42 +1,83 @@
 /* eslint-disable prettier/prettier */
-
-import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post } from "@nestjs/common";
 import { TokenService } from "./token.service";
 import { UserService } from "src/users/users.service";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiProperty } from "@nestjs/swagger";
-import { loginUserDto, refreshUserDto, CreateUserDto } from "./dto/auth.dto";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { LoginUserDto, RefreshUserDto, CreateUserDto, UserProfile } from "./dto/auth.dto";
 
-@ApiTags('Modulo de Autenticacion') // Agrupa los endpoints de este controlador bajo el tag "Modulo de Autenticacion"
+@ApiTags('Modulo de Autenticacion')
 @Controller("auth")
 export class AuthController {
     constructor(
         private readonly tokenService: TokenService,
         private readonly userService: UserService,
-    ){}
+    ) {}
 
-    @ApiOperation({summary: 'Crear un nuevo usuario'}) 
+    // REGISTRO
+    @ApiOperation({ summary: 'Registrar un nuevo usuario' })
+    @ApiBody({ type: CreateUserDto })
+    @ApiResponse({
+        status: 201,
+        description: 'Usuario registrado exitosamente',
+        schema: {
+            example: {
+                id: 1,
+                email: "gael@example.com",
+                full_name: "Gael Pérez",
+                created_at: "2025-10-21T18:23:00Z"
+            }
+        }
+    })
+    @ApiResponse({ status: 400, description: 'Datos inválidos o email duplicado' })
     @Post("register")
     async createUser(@Body() createUserDto: CreateUserDto) {
         return this.userService.createUser(createUserDto);
     }
 
-
-    @ApiOperation({summary: 'Login de usuario'}) 
+    // LOGIN USUARIO
+    @ApiOperation({ summary: 'Login de usuario' })
+    @ApiBody({ type: LoginUserDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Inicio de sesión exitoso',
+        schema: {
+            example: {
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+        }
+    })
+    @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
     @Post("login")
-    async login(@Body() loginDto: loginUserDto) {
+    async login(@Body() loginDto: LoginUserDto) {
         const user = await this.userService.validateUser(loginDto);
-        if(user){
-            const token= await this.tokenService.generateAccessToken(user);
-            const refreshToken= await this.tokenService.generateRefreshToken(user);
+        if (user) {
+            const token = await this.tokenService.generateAccessToken(user);
+            const refreshToken = await this.tokenService.generateRefreshToken(user);
             return { access_token: token, refresh_token: refreshToken };
         }
-        return { error: "Invalid credentials" };
+        return { error: "Credenciales inválidas" };
     }
 
-    // ✅ Login exclusivo para admin
-    @ApiOperation({ summary: 'Login de admin' })
+    // LOGIN ADMIN
+    @ApiOperation({ summary: 'Login de administrador' })
+    @ApiBody({ type: LoginUserDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Inicio de sesión de administrador exitoso',
+        schema: {
+            example: {
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+        }
+    })
+    @ApiResponse({
+        status: 403,
+        description: 'Credenciales inválidas o sin permisos de admin'
+    })
     @Post("admin/login")
-    async adminLogin(@Body() loginDto: loginUserDto) {
+    async adminLogin(@Body() loginDto: LoginUserDto) {
         const admin = await this.userService.validateAdmin(loginDto);
         if (!admin) {
             return { error: "Credenciales inválidas o no tiene permisos de admin" };
@@ -48,12 +89,25 @@ export class AuthController {
         return { access_token: token, refresh_token: refreshToken };
     }
 
-
-    @ApiOperation({summary: 'Refresh Token'}) 
+    // REFRESH TOKEN
+    @ApiOperation({ summary: 'Generar nuevo access token mediante refresh token' })
+    @ApiBody({ type: RefreshUserDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Nuevo access token generado exitosamente',
+        schema: {
+            example: {
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+        }
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'Token de actualización inválido o expirado'
+    })
     @Post("refresh-token")
-    async refresh(@Body() refreshDto: refreshUserDto) {
-    //async refresh(@Body() refreshDto: { token: string }) {
-        const payload= await this.tokenService.verifyRefreshToken(refreshDto.token);
+    async refresh(@Body() refreshDto: RefreshUserDto) {
+        const payload = await this.tokenService.verifyRefreshToken(refreshDto.token);
         if (payload) {
             const user = await this.userService.findUserById(Number(payload.sub));
             if (user) {
@@ -64,8 +118,8 @@ export class AuthController {
         return { error: "Invalid refresh token" };
     }
 
-    // Enpointds faltantes
-    // POST /auth/forgot-password → Enviar correo con link/código para resetear.
-    // POST /auth/reset-password → Cambiar contraseña desde el link/código.
-    // POST /auth/logout → Cerrar sesión (invalidar token, opcional).
+    // FUTUROS ENDPOINTS
+    // @Post("forgot-password") ...
+    // @Post("reset-password") ...
+    // @Post("logout") ...
 }

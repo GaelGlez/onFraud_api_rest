@@ -12,7 +12,7 @@ export class JwtAuthGuard implements CanActivate{
         const auth = req.headers.authorization ?? "";
         const [scheme, token] = auth.split(" ");
         if(scheme !== "Bearer" || !token) 
-            throw new UnauthorizedException("A chingar su madre");
+            throw new UnauthorizedException("Token no proporcionado o con formato inválido");
         try{
             const payload = await this.tokenService.verifyAccessToken(token);
             (req as AuthenticatedRequest).user = {

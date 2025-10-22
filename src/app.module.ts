@@ -9,8 +9,6 @@ import { AdminModule } from './admin/admin.module';
 import { FileModule } from './files/file.module';
 import { ReportsModule } from './reports/reports.module';
 
-
-
 @Module({
   imports: [DbModule, UsersModule, ReportsModule, AuthModule, AdminModule, FileModule, JwtModule.register({
     global: true,
