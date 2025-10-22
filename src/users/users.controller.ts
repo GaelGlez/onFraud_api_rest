@@ -1,41 +1,51 @@
 /* eslint-disable prettier/prettier */
+import { Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UserService } from './users.service';
+import { UpdateUserDto, UpdatePasswordDto, User } from './dto/users.dto';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
-import { Body, Controller, Post, Put } from "@nestjs/common";
-import { UserService } from "./users.service";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
-import { UpdateUserDto } from "./dto/users.dto";
-import { TokenService } from "../auth/token.service";
-import { CreateUserDto } from "./dto/users.dto";
-
-@ApiTags('Modulo de Usuarios') // Agrupa los endpoints de este controlador bajo el tag "Modulo de Usuarios"
+@ApiTags('Usuarios')
 @Controller('users')
 export class UsersController {
-    constructor(
-        private readonly userService: UserService, 
-        private readonly tokenService: TokenService
-    ) {}
+    constructor(private readonly userService: UserService) {}
 
-    @ApiOperation({summary: 'Crear un nuevo usuario'}) // Descripción de la operación para Swagger
-    @Post()
-    async createUser(@Body() createUserDto: CreateUserDto) {
-        return this.userService.createUser(
-            createUserDto.email,
-            createUserDto.full_name,
-            createUserDto.password,
-        );
+    // Obtener perfil del usuario autenticado
+    @ApiOperation({ summary: 'Obtener perfil del usuario autenticado' })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @Get('profile')
+    @ApiResponse({ status: 200, description: 'Perfil obtenido correctamente.', type: User })
+    @ApiResponse({ status: 401, description: 'No autorizado.' })
+    async getProfile(@Req() req) {
+        const userId = Number(req.user.userId);
+        const user = await this.userService.findUserById(userId);
+        return { profile: user };
     }
 
-    //El controller recibe los datos que el usuario quiere cambiar. Pasa 'userId' y 'updateDto' al service
-    // Recbe datos y token
-    @ApiOperation({summary: 'Actualizar un usuario'}) // Descripción de la operación para Swagger
+    // Actualizar información del usuario
+    @ApiOperation({ summary: 'Actualizar datos del usuario' })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
     @Put()
-    async updateUser(@Body() updateDto: UpdateUserDto, @Body('token') token:string) {
-        const payload = await this.tokenService.verifyRefreshToken(token);
-        if (payload) {
-            const userId = Number(payload.sub);
-            // Aquí llamarías al servicio para actualizar el usuario
-            const updateUser = await this.userService.updateUser(userId, updateDto);
-            return updateUser;
-        }
+    @ApiResponse({ status: 200, description: 'Usuario actualizado correctamente.' , type: UpdateUserDto })
+    @ApiResponse({ status: 400, description: 'Datos inválidos.' })
+    @ApiResponse({ status: 401, description: 'No autorizado.' })
+    async updateUser(@Body() updateDto: UpdateUserDto, @Req() req) {
+        const userId = Number(req.user.userId);
+        return this.userService.updateUser(userId, updateDto);
+    }
+
+    // Actualizar contraseña
+    @ApiOperation({ summary: 'Actualizar contraseña del usuario' })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @Put('password')
+    @ApiResponse({ status: 200, description: 'Contraseña actualizada correctamente.' })
+    @ApiResponse({ status: 400, description: 'Contraseña actual o nueva inválida.' })
+    @ApiResponse({ status: 401, description: 'No autorizado.' })
+    async updatePassword(@Body() updatePasswordDto: UpdatePasswordDto, @Req() req) {
+        const userId = Number(req.user.userId);
+        return this.userService.updatePassword(userId, updatePasswordDto);
     }
 }

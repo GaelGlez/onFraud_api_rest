@@ -1,39 +1,116 @@
 /* eslint-disable prettier/prettier */
-
-import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post, UseGuards, Delete, Req } from "@nestjs/common";
 import { TokenService } from "./token.service";
 import { UserService } from "src/users/users.service";
-import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
-import type { AuthenticatedRequest } from "src/common/interfaces/authenticated-request";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiProperty } from "@nestjs/swagger";
-import { loginUserDto, refreshUserDto } from "./dto/auth.dto";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { LoginUserDto, RefreshUserDto, CreateUserDto } from "./dto/auth.dto";
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { User } from '../users/dto/users.dto';
 
-@ApiTags('Modulo de Autenticacion') // Agrupa los endpoints de este controlador bajo el tag "Modulo de Autenticacion"
+
+@ApiTags('Modulo de Autenticacion')
 @Controller("auth")
 export class AuthController {
     constructor(
         private readonly tokenService: TokenService,
         private readonly userService: UserService,
-    ){}
+    ) {}
 
-    @ApiOperation({summary: 'Login de usuario'}) 
-    @Post("login")
-    async login(@Body() loginDto: loginUserDto) {
-    //async login(@Body() loginDto: {email:string, password:string}) {
-        const user= await this.userService.validateUser(loginDto.email, loginDto.password);
-        if(user){
-            const token= await this.tokenService.generateAccessToken(user);
-            const refreshToken= await this.tokenService.generateRefreshToken(user);
-            return { access_token: token, refresh_token: refreshToken };
+    // REGISTRO
+    @ApiOperation({ summary: 'Registrar un nuevo usuario' })
+    @ApiBody({ type: CreateUserDto })
+    @ApiResponse({
+        status: 201,
+        description: 'Usuario registrado exitosamente',
+        schema: {
+            example: {
+                id: 1,
+                email: "gael@example.com",
+                full_name: "Gael Pérez",
+                created_at: "2025-10-21T18:23:00Z"
+            }
         }
-        return { error: "Invalid credentials" };
+    })
+    @ApiResponse({ status: 400, description: 'Datos inválidos o email duplicado' })
+    @Post("register")
+    async createUser(@Body() createUserDto: CreateUserDto) {
+        return this.userService.createUser(createUserDto);
     }
 
-    @ApiOperation({summary: 'Refresh Token'}) 
-    @Post("refresh")
-    async refresh(@Body() refreshDto: refreshUserDto) {
-    //async refresh(@Body() refreshDto: { token: string }) {
-        const payload= await this.tokenService.verifyRefreshToken(refreshDto.token);
+    // LOGIN USUARIO
+    @ApiOperation({ summary: 'Login de usuario' })
+    @ApiBody({ type: LoginUserDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Inicio de sesión exitoso',
+        schema: {
+            example: {
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+        }
+    })
+    @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
+    @Post("login")
+    async login(@Body() loginDto: LoginUserDto) {
+        const user = await this.userService.validateUser(loginDto);
+        if (user) {
+            const token = await this.tokenService.generateAccessToken(user);
+            const refreshToken = await this.tokenService.generateRefreshToken(user);
+            return { access_token: token, refresh_token: refreshToken };
+        }
+        return { error: "Credenciales inválidas" };
+    }
+
+    // LOGIN ADMIN
+    @ApiOperation({ summary: 'Login de administrador' })
+    @ApiBody({ type: LoginUserDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Inicio de sesión de administrador exitoso',
+        schema: {
+            example: {
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+        }
+    })
+    @ApiResponse({
+        status: 403,
+        description: 'Credenciales inválidas o sin permisos de admin'
+    })
+    @Post("admin/login")
+    async adminLogin(@Body() loginDto: LoginUserDto) {
+        const admin = await this.userService.validateAdmin(loginDto);
+        if (!admin) {
+            return { error: "Credenciales inválidas o no tiene permisos de admin" };
+        }
+
+        const token = await this.tokenService.generateAccessToken(admin);
+        const refreshToken = await this.tokenService.generateRefreshToken(admin);
+
+        return { access_token: token, refresh_token: refreshToken };
+    }
+
+    // REFRESH TOKEN
+    @ApiOperation({ summary: 'Generar nuevo access token mediante refresh token' })
+    @ApiBody({ type: RefreshUserDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Nuevo access token generado exitosamente',
+        schema: {
+            example: {
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+        }
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'Token de actualización inválido o expirado'
+    })
+    @Post("refresh-token")
+    async refresh(@Body() refreshDto: RefreshUserDto) {
+        const payload = await this.tokenService.verifyRefreshToken(refreshDto.token);
         if (payload) {
             const user = await this.userService.findUserById(Number(payload.sub));
             if (user) {
@@ -44,13 +121,19 @@ export class AuthController {
         return { error: "Invalid refresh token" };
     }
 
-    @ApiOperation({summary: 'Obtener perfil del usuario'})
-    @Get("profile")
+    @ApiOperation({ summary: 'Eliminar la cuenta del usuario logueado' })
+    @ApiBearerAuth()
+    @ApiResponse({ status: 200, description: 'Cuenta eliminada exitosamente' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth() // Indica que este endpoint requiere autenticación con Bearer token
-    @ApiResponse({ status: 201, description: 'Perfil del usuario obtenido correctamente.' })
-    @ApiResponse({ status: 401, description: 'No autorizado.' })
-    getProfile(@Req() req: AuthenticatedRequest) {
-        return { profile: req.user.profile };
+    @Delete("delete-account")
+    async deleteAccount(@Req() req) {
+        const userId = Number(req.user?.userId);
+        if (!userId) {
+            return { error: "Usuario no autenticado" };
+        }
+
+        await this.userService.deleteUser(userId);
+        return { message: "Cuenta eliminada exitosamente" };
     }
 }
