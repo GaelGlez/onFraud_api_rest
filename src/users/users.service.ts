@@ -9,7 +9,7 @@ import { LoginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
 
 @Injectable()
 export class UserService {
-    constructor(private readonly usersRepository: UsersRepository) {}
+    constructor(private readonly usersRepository: UsersRepository) {}s
 
     async createUser(createUserDto: CreateUserDto) {
         const hashed_password= sha256(createUserDto.password);
@@ -65,6 +65,10 @@ export class UserService {
         if (!user.role) return null;
 
         return user;
+    }
+
+    async deleteUser(userId: number): Promise<void> {
+        await this.usersRepository.deleteUser(userId);
     }
 
 }

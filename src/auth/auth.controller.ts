@@ -1,9 +1,12 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Post, UseGuards, Delete, Req } from "@nestjs/common";
 import { TokenService } from "./token.service";
 import { UserService } from "src/users/users.service";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { LoginUserDto, RefreshUserDto, CreateUserDto, UserProfile } from "./dto/auth.dto";
+import { LoginUserDto, RefreshUserDto, CreateUserDto } from "./dto/auth.dto";
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { User } from '../users/dto/users.dto';
+
 
 @ApiTags('Modulo de Autenticacion')
 @Controller("auth")
@@ -118,8 +121,19 @@ export class AuthController {
         return { error: "Invalid refresh token" };
     }
 
-    // FUTUROS ENDPOINTS
-    // @Post("forgot-password") ...
-    // @Post("reset-password") ...
-    // @Post("logout") ...
+    @ApiOperation({ summary: 'Eliminar la cuenta del usuario logueado' })
+    @ApiBearerAuth()
+    @ApiResponse({ status: 200, description: 'Cuenta eliminada exitosamente' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
+    @UseGuards(JwtAuthGuard)
+    @Delete("delete-account")
+    async deleteAccount(@Req() req) {
+        const userId = Number(req.user?.userId);
+        if (!userId) {
+            return { error: "Usuario no autenticado" };
+        }
+
+        await this.userService.deleteUser(userId);
+        return { message: "Cuenta eliminada exitosamente" };
+    }
 }

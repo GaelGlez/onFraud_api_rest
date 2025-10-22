@@ -86,4 +86,9 @@ export class UsersRepository{
         await this.db.getPool().query(sql, [newPasswordHash, id]);
         return true;
     }
+
+    async deleteUser(id: number): Promise<void> {
+        const sql = `DELETE FROM users WHERE id = ?`;
+        await this.db.getPool().query(sql, [id]);
+    }
 }

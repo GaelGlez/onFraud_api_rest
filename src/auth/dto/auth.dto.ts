@@ -29,7 +29,6 @@ export class CreateUserDto {
     @IsString({ message: "Debe ser un string" })
     @MinLength(9, { message: "La contraseña debe tener al menos 9 caracteres" })
     password: string;
-
 }
 
 export class LoginUserDto {
