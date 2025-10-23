@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 
 export class FileUploadDto {
     @ApiProperty({ type: 'string', format: 'binary', description: 'Archivo a subir' })
@@ -7,6 +8,7 @@ export class FileUploadDto {
 
 export class DeleteFileDto {
     @ApiProperty({ example: 'foto1.png', description: 'Nombre del archivo a eliminar' })
+    @IsString()
     filename: string;
 }
 

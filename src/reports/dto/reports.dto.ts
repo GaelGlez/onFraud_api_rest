@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUrl, IsInt, IsArray } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, IsInt, IsArray, MinLength, MaxLength } from 'class-validator';
 
 export class CreateReportDto {
   @ApiProperty({
@@ -10,6 +10,8 @@ export class CreateReportDto {
   })
   @IsNotEmpty({ message: 'El título no puede estar vacío.' })
   @IsString({ message: 'El título debe ser una cadena de texto.' })
+  @MinLength(5, { message: 'El título debe tener al menos 5 caracteres.' })
+  @MaxLength(100, { message: 'El título no puede exceder los 100 caracteres.' })
   title!: string;
 
   @ApiProperty({
@@ -46,6 +48,8 @@ export class CreateReportDto {
   })
   @IsNotEmpty({ message: 'La descripción no puede estar vacía.' })
   @IsString({ message: 'La descripción debe ser texto.' })
+  @MinLength(20, { message: 'La descripción debe tener al menos 20 caracteres.' })
+  @MaxLength(1000, { message: 'La descripción no puede exceder los 1000 caracteres.' })
   description!: string;
 
   @ApiProperty({
