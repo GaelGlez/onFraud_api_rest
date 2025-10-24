@@ -1,7 +1,9 @@
 /* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { CreateReportDto, UpdateReportDto, Report, Categories } from './dto/reports.dto';
+import { CreateReportDto, Report, Categories, CategoryDTO } from './dto/reports.dto';
+import { HttpException, HttpStatus } from '@nestjs/common';
+
 
 @Injectable()
 export class ReportsRepository {
@@ -219,7 +221,7 @@ export class ReportsRepository {
     return rows;
   }
 
-  async createCategory(dto: Categories) {
+  async createCategory(dto: CategoryDTO) {
     const [result]: any = await this.db.getPool().query(
         'INSERT INTO categories (name) VALUES (?)', [dto.name]
     );
@@ -232,7 +234,24 @@ export class ReportsRepository {
   }
 
   async deleteCategory(id: number) {
+    // Contar cuántos reportes usan esta categoría
+    const [rows]: any = await this.db
+      .getPool()
+      .query('SELECT COUNT(*) AS total FROM reports WHERE category_id = ?', [id]);
+
+    const totalReports = rows[0]?.total || 0;
+
+    // Lanzar excepción si hay reportes asociados
+    if (totalReports > 0) {
+      throw new HttpException(
+        `No se puede eliminar la categoría porque tiene ${totalReports} reporte(s) asociado(s).`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    // Si no hay reportes, borrar la categoría
     await this.db.getPool().query('DELETE FROM categories WHERE id = ?', [id]);
+
     return { message: `Categoría ${id} eliminada correctamente` };
   }
 }

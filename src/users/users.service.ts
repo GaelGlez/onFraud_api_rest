@@ -3,7 +3,7 @@
 import { Injectable } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { sha256 } from "src/util/hash/hash.util";
-import { UpdateUserDto } from "./dto/users.dto";
+import { UpdateUserAdminDto, UpdateUserDto } from "./dto/users.dto";
 import { LoginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
 
 
@@ -40,6 +40,19 @@ export class UserService {
             throw new Error("No hay campos para actualizar");
         }
         return this.usersRepository.updateUser(userId, email, full_name);
+    }
+
+    async updateUserAdmin(userId: number, updateDto: UpdateUserAdminDto) {
+        const { email, full_name, password } = updateDto;
+
+        if (!email && !full_name && !password) {
+            throw new Error("No hay campos para actualizar");
+        }
+        let hashedPassword: string | undefined = undefined;
+        if (password) {
+            hashedPassword = sha256(password);
+        }
+        return this.usersRepository.updateUserAdmin(userId, email, full_name, hashedPassword);
     }
 
     async updatePassword(userId: number, updatePasswordDto: { oldPassword: string; newPassword: string; }) {

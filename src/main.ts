@@ -27,7 +27,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('onFraud Documentation') // Título del API
     .setDescription('Documentación del API Rest onFraud en Swagger') // Descripción del API
-    .setVersion('1.0')// Versión del API
+    .setVersion('2.0')// Versión del API
     .addBearerAuth()
     .build();
   const doc = SwaggerModule.createDocument(app, config);

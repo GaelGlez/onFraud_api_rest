@@ -1,9 +1,8 @@
-import { Body, Controller, Put, Get, Param, Query, Post } from "@nestjs/common";
+import { Body, Controller, Put, Get, Param, Query, Post, Delete } from "@nestjs/common";
 import { UserService } from "../users/users.service";
 import { ApiOperation, ApiTags, ApiParam, ApiResponse, ApiQuery } from "@nestjs/swagger";
-import { UpdateUserDto, User } from "../users/dto/users.dto";
+import { UpdateUserAdminDto, User } from "../users/dto/users.dto";
 import { ReportsService } from "../reports/reports.service";
-import { Delete } from "@nestjs/common/decorators";
 import { Report, Categories, CategoryDTO } from "src/reports/dto/reports.dto";
 
 @ApiTags('Modulo de Administracion')
@@ -34,6 +33,7 @@ export class AdminController {
         const users = await this.userService.findAllUsers();
         if (!users) return null;
         return users.map(user => ({
+            id: user.id,
             full_name: user.full_name,
             email: user.email,
         }));
@@ -42,16 +42,30 @@ export class AdminController {
 
     @ApiOperation({ summary: 'Actualizar Usuario (Admin)' })
     @ApiParam({ name: 'id', type: Number, description: 'ID del usuario a actualizar' })
-    @ApiResponse({ status: 200, description: 'Usuario actualizado correctamente', type: UpdateUserDto })
+    @ApiResponse({ status: 200, description: 'Usuario actualizado correctamente', type: UpdateUserAdminDto })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
     @Put('users/:id')
-    async updateUser(@Param('id') userId: number, @Body() updateDto: UpdateUserDto) {
-        const updateUser = await this.userService.updateUser(userId, updateDto);
+    async updateUser(@Param('id') userId: number, @Body() updateDto: UpdateUserAdminDto) {
+        const updateUser = await this.userService.updateUserAdmin(userId, updateDto);
         if (!updateUser) return null;
         return {
             full_name: updateUser.full_name,
             email: updateUser.email,
         };
+    }
+
+    @ApiOperation({ summary: 'Eliminar usuario por ID' })
+    @ApiParam({ name: 'id', type: Number, description: 'ID del usuario a eliminar' })
+    @ApiResponse({ status: 200, description: 'Usuario eliminado exitosamente' })
+    @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+    @Delete('users/:id')
+    async deleteUser(@Param('id') userId: number) {
+        const user = await this.userService.findUserById(userId);
+        if (!user) {
+            return { status: 404, message: 'Usuario no encontrado' };
+        }
+        await this.userService.deleteUser(userId);
+        return { status: 200, message: `Usuario ${user.full_name} eliminado correctamente` };
     }
 
     //=============== Reportes ===============
@@ -106,7 +120,6 @@ export class AdminController {
         return { message: `Reporte ${id} eliminado correctamente` };
     }
 
-    // ESTO APENAS LO ESTOY HACIENDO PARA LA WEB
     //=============== CATEGORÍAS ===============
     @ApiOperation({ summary: 'Listar todas las categorías' })
     @ApiResponse({ status: 200, description: 'Categorías obtenidas correctamente', type: [Categories] })

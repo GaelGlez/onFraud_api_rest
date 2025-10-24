@@ -81,6 +81,38 @@ export class UsersRepository{
         return (rows as User[])[0] || null;
     }
 
+    async updateUserAdmin(id: number, email?: string, full_name?: string, newPasswordHash?: string) {
+        // Construir dinámicamente SET solo con los campos que llegan
+        const fields: string[] = [];
+        const values: any[] = [];
+
+        if (email !== undefined) {
+            fields.push('email = ?');
+            values.push(email);
+        }
+
+        if (full_name !== undefined) {
+            fields.push('full_name = ?');
+            values.push(full_name);
+        }
+
+        if (newPasswordHash !== undefined) {
+            fields.push('password_hash = ?');
+            values.push(newPasswordHash);
+        }
+
+        if (fields.length === 0) return null; // nada que actualizar
+
+        const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ?`;
+        values.push(id);
+
+        await this.db.getPool().query(sql, values);
+
+        // Traer el usuario actualizado
+        const [rows] = await this.db.getPool().query('SELECT id, full_name, email FROM users WHERE id = ?', [id]);
+        return (rows as User[])[0] || null;
+    }
+
     async updatePasswordUser(id: number, newPasswordHash: string) {
         const sql = `UPDATE users SET password_hash = ? WHERE id = ?`;
         await this.db.getPool().query(sql, [newPasswordHash, id]);
