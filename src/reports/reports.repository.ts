@@ -223,7 +223,7 @@ export class ReportsRepository {
     const [result]: any = await this.db.getPool().query(
         'INSERT INTO categories (name) VALUES (?)', [dto.name]
     );
-     return result.insertId;
+    return { id: result.insertId, name: dto.name };
   }
 
   async updateCategory(id: number, name: string) {

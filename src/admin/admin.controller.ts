@@ -4,7 +4,7 @@ import { ApiOperation, ApiTags, ApiParam, ApiResponse, ApiQuery } from "@nestjs/
 import { UpdateUserDto, User } from "../users/dto/users.dto";
 import { ReportsService } from "../reports/reports.service";
 import { Delete } from "@nestjs/common/decorators";
-import { Report, Categories } from "src/reports/dto/reports.dto";
+import { Report, Categories, CategoryDTO } from "src/reports/dto/reports.dto";
 
 @ApiTags('Modulo de Administracion')
 @Controller('admin')
@@ -118,7 +118,7 @@ export class AdminController {
     @ApiOperation({ summary: 'Crear nueva categoría' })
     @ApiResponse({ status: 201, description: 'Categoría creada correctamente', type: Categories })
     @Post('/categories')
-    async createCategory(@Body() dto: Categories) {
+    async createCategory(@Body() dto: CategoryDTO) {
         return this.reportsService.createCategory(dto);
     }
 
@@ -126,7 +126,7 @@ export class AdminController {
     @ApiParam({ name: 'id', type: Number })
     @ApiResponse({ status: 200, description: 'Categoría actualizada correctamente', type: Categories })
     @Put('/categories/:id')
-    async updateCategory(@Param('id') id: number, @Body() dto: Categories) {
+    async updateCategory(@Param('id') id: number, @Body() dto: CategoryDTO) {
         return this.reportsService.updateCategory(id, dto.name);
     }
 
@@ -139,6 +139,8 @@ export class AdminController {
     }
 
     // =============== ESTADÍSTICAS ===============
+    @ApiOperation({ summary: 'Obtener estadísticas de reportes' })
+    @ApiResponse({ status: 200, description: 'Estadísticas de reportes obtenidas correctamente' })
     @Get('reports/stats')
     async getReportsStats() {
         const reports = await this.reportsService.findAllReports({});
@@ -148,6 +150,8 @@ export class AdminController {
         return { pending, approved, rejected, total: reports.length };
     }
 
+    @ApiOperation({ summary: 'Obtener número de reportes por categoría' })
+    @ApiResponse({ status: 200, description: 'Número de reportes por categoría obtenido correctamente' })
     @Get('reports/by-category')
     async getReportsByCategory() {
         const categories = await this.reportsService.findAllCategories();
@@ -159,6 +163,20 @@ export class AdminController {
         return data;
     }
 
+    // GET /admin/reports/recent
+    // GET /admin/reports/recent?limit=10&offset=0
+    @ApiOperation({ summary: 'Obtener reportes recientes (los más recientes primero)' })
+    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Cantidad de reportes a traer (por defecto 5)' })
+    @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset para paginación (por defecto 0)' })
+    @ApiResponse({ status: 200, description: 'Reportes recientes obtenidos correctamente', type: [Report] })
+    @Get('reports/recent')
+    async getRecentReports(
+    @Query('limit') limit: number = 5,
+    @Query('offset') offset: number = 0
+    ) {
+    const reports = await this.reportsService.findAllReports({ limit, offset });
+    return reports;
+    }
 }
 
 
