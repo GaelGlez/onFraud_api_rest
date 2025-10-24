@@ -44,10 +44,12 @@ export class FileController {
   // =============== ELIMINAR ARCHIVO ===============
   @Delete('delete')
   @ApiOperation({ summary: 'Eliminar un archivo' })
-  @ApiResponse({ status: 200, description: 'Archivo eliminado correctamente.' })
+  @ApiResponse({ status: 200, description: 'Archivo eliminado correctamente.', type: FileResponseDto })
   @ApiResponse({ status: 400, description: 'Se requiere el nombre del archivo.' })
   @ApiResponse({ status: 404, description: 'Archivo no encontrado.' })
+  @ApiResponse({ status: 403, description: 'Ruta de archivo inválida.' })
   @ApiResponse({ status: 500, description: 'Error al eliminar archivo.' })
+  @ApiBody({ description: 'Nombre del archivo a eliminar', type: DeleteFileDto })
   async deleteFile(@Body() body: DeleteFileDto) {
     const { filename } = body;
 
@@ -55,29 +57,35 @@ export class FileController {
       throw new HttpException('Filename is required', HttpStatus.BAD_REQUEST);
     }
 
-    // 1️⃣ Sanitizar nombre (quita caracteres peligrosos)
+    // 1️⃣ Sanitizar nombre
     const safeName = sanitize(filename);
 
-    // 2️⃣ Construir ruta absoluta y normalizar
+    // 2️⃣ Validar extensión permitida (whitelist)
+    const allowedExtensions = ['png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt'];
+    const ext = safeName.split('.').pop()?.toLowerCase();
+    if (!ext || !allowedExtensions.includes(ext)) {
+      throw new HttpException('Invalid file extension', HttpStatus.BAD_REQUEST);
+    }
+
+    // 3️⃣ Construir ruta absoluta y normalizar
     const filePath = resolve(this.uploadRoot, safeName);
 
-    // 3️⃣ Verificar que el archivo está dentro del directorio seguro
+    // 4️⃣ Verificar que el archivo está dentro del directorio seguro
     if (!filePath.startsWith(this.uploadRoot)) {
       throw new HttpException('Invalid file path', HttpStatus.FORBIDDEN);
     }
 
-    // 4️⃣ Verificar existencia
+    // 5️⃣ Verificar existencia
     if (!fs.existsSync(filePath)) {
       throw new HttpException('File not found', HttpStatus.NOT_FOUND);
     }
 
-    // 5️⃣ Eliminar de forma segura
+    // 6️⃣ Eliminar de forma segura
     try {
       fs.unlinkSync(fs.realpathSync(filePath));
       return { message: 'File deleted successfully' };
     } catch (error: any) {
       console.error('Error deleting file:', error.message || error);
-
       throw new HttpException(
         `Failed to delete file: ${error.message || 'unknown error'}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
