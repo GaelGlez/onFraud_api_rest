@@ -1,12 +1,10 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Post, UseGuards, Delete, Req } from "@nestjs/common";
+import { Body, Controller, Post, UseGuards, Delete, Req, UnauthorizedException } from "@nestjs/common";
 import { TokenService } from "./token.service";
 import { UserService } from "src/users/users.service";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { LoginUserDto, RefreshUserDto, CreateUserDto } from "./dto/auth.dto";
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { User } from '../users/dto/users.dto';
-
 
 @ApiTags('Modulo de Autenticacion')
 @Controller("auth")
@@ -110,16 +108,18 @@ export class AuthController {
     })
     @Post("refresh-token")
     async refresh(@Body() refreshDto: RefreshUserDto) {
-        const payload = await this.tokenService.verifyRefreshToken(refreshDto.token);
-        if (payload) {
+        try {
+            const payload = await this.tokenService.verifyRefreshToken(refreshDto.token);
             const user = await this.userService.findUserById(Number(payload.sub));
-            if (user) {
-                const newAccessToken = await this.tokenService.generateAccessToken(user);
-                return { access_token: newAccessToken };
-            }
+            if (!user) throw new Error(); // no revelamos detalles
+            const newAccessToken = await this.tokenService.generateAccessToken(user);
+            return { access_token: newAccessToken };
+        } catch {
+            // Mensaje genérico
+            throw new UnauthorizedException("Token inválido o expirado");
         }
-        return { error: "Invalid refresh token" };
     }
+
 
     // =============== ELIMINAR CUENTA (Autenticado) ===============
     @ApiOperation({ summary: 'Eliminar la cuenta del usuario logueado' })

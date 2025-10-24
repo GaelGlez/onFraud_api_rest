@@ -1,8 +1,7 @@
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { CreateReportDto, Report, Categories, CategoryDTO } from './dto/reports.dto';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 
 @Injectable()

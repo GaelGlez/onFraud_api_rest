@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";    
+import { Injectable, UnauthorizedException } from "@nestjs/common";    
 import { JwtService } from "@nestjs/jwt";
 import { UserProfile, AccessPayload, RefreshPayload } from "./dto/auth.dto";
 
@@ -32,7 +32,7 @@ export class TokenService {
             secret:process.env.JWT_SECRET
         });
         if(payload.type !== "access"){
-            throw new Error("Invalid token type");
+            throw new UnauthorizedException("Token inválido");
         }
         return payload;
     }
@@ -41,7 +41,7 @@ export class TokenService {
             secret:process.env.JWT_SECRET
         });
         if(payload.type !== "refresh"){
-            throw new Error("Invalid token type");
+            throw new UnauthorizedException("Token inválido");
         }
         return payload;
     }

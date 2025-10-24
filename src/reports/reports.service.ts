@@ -1,9 +1,9 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException, ForbiddenException, ConflictException  } from '@nestjs/common';
 import { ReportsRepository } from './reports.repository';
-import { CreateReportDto, UpdateReportDto, Report, Categories, CategoryDTO } from './dto/reports.dto';
-import * as fs from 'fs';
-import * as path from 'path';
+import { CreateReportDto, Report, Categories, CategoryDTO } from './dto/reports.dto';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 @Injectable()
 export class ReportsService {

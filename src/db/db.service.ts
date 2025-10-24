@@ -15,7 +15,7 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
         });
     }
     onModuleDestroy() {
-        void this.pool.end();
+        this.pool.end();
     }
 
     getPool(): Pool {

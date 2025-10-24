@@ -3,8 +3,6 @@
 import { Injectable, ConflictException } from "@nestjs/common";
 import { DbService } from "src/db/db.service";
 import { User } from "./dto/users.dto";
-import type { AuthenticatedRequest } from "src/common/interfaces/authenticated-request";
-
 
 @Injectable()
 export class UsersRepository{
