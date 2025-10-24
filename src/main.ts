@@ -24,13 +24,13 @@ async function bootstrap() {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // necesario para Swagger UI
+          styleSrc: ["'self'", "'unsafe-inline'"], // inline styles permitidos
           imgSrc: ["'self'", "data:"],
-          connectSrc: ["'self'"],
+          connectSrc: ["'self'", "ws://localhost:3000"], // si Next.js usa websocket o hot reload
           fontSrc: ["'self'"],
           objectSrc: ["'none'"],
-          frameAncestors: ["'none'"], // evita que otros dominos enmarquen tu app
+          frameAncestors: ["'none'"],
           upgradeInsecureRequests: [],
         },
       },
