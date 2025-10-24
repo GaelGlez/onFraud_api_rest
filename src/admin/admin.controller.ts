@@ -1,16 +1,17 @@
-import { Body, Controller, Put, Get, Param, Query  } from "@nestjs/common";
+import { Body, Controller, Put, Get, Param, Query, Post } from "@nestjs/common";
 import { UserService } from "../users/users.service";
 import { ApiOperation, ApiTags, ApiParam, ApiResponse, ApiQuery } from "@nestjs/swagger";
 import { UpdateUserDto, User } from "../users/dto/users.dto";
 import { ReportsService } from "../reports/reports.service";
 import { Delete } from "@nestjs/common/decorators";
-import { Report } from "src/reports/dto/reports.dto";
+import { Report, Categories } from "src/reports/dto/reports.dto";
 
 @ApiTags('Modulo de Administracion')
 @Controller('admin')
 export class AdminController {
     constructor(private readonly userService: UserService, private readonly reportsService: ReportsService) {}
 
+    //=============== Usuarios ===============
     @ApiOperation({ summary: 'Buscar usuario por ID' })
     @ApiParam({ name: 'id', type: Number, description: 'ID del usuario' })
     @ApiResponse({ status: 200, description: 'Usuario encontrado exitosamente' })
@@ -53,7 +54,7 @@ export class AdminController {
         };
     }
 
-    //Reportes ---------------------------------------------------
+    //=============== Reportes ===============
     @ApiOperation({ summary: 'Listar reportes con filtros (Admin)' })
     @ApiQuery({ name: 'category_id', required: false, type: Number, description: 'Filtrar por categoría' })
     @ApiQuery({ name: 'status_id', required: false, type: Number, description: 'Filtrar por estado' })
@@ -65,24 +66,20 @@ export class AdminController {
         @Query('category_id') categoryId?: number,
         @Query('status_id') statusId?: number,
         @Query('url') url?: string,
+        @Query('userFilter') userFilter?: 'onlyAnonymous' | 'onlyUsers', // nuevo
+        @Query('user_id') userId?: number,
         @Query('q') keyword?: string
     ) {
-        const reports = await this.reportsService.findAllReports({ categoryId, statusId, url, keyword });
+        const reports = await this.reportsService.findAllReports({
+            categoryId,
+            statusId,
+            url,
+            userFilter,
+            userId,
+            keyword
+        });
         return reports;
     }
-
-
-    @ApiOperation({ summary: 'Ver detalle de un reporte (Admin)' })
-    @ApiParam({ name: 'id', type: Number, description: 'ID del reporte' })
-    @ApiResponse({ status: 200, description: 'Reporte encontrado', type: Report })
-    @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
-    @Get('reports/:id')
-    async getReportById(@Param('id') id: number) {
-        const report = await this.reportsService.findReportById(id);
-        if (!report) return null;
-        return report;
-    }
-
 
     @ApiOperation({ summary: 'Actualizar estado de un reporte (Admin)' })
     @ApiParam({ name: 'id', type: Number, description: 'ID del reporte' })
@@ -99,17 +96,72 @@ export class AdminController {
 
     @ApiOperation({ summary: 'Eliminar reporte (Admin)' })
     @ApiParam({ name: 'id', type: Number, description: 'ID del reporte a eliminar' })
-    @ApiQuery({ name: 'userId', type: Number, required: true, description: 'ID del usuario que realiza la eliminación' })
     @ApiResponse({ status: 200, description: 'Reporte eliminado correctamente' })
     @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
     @Delete('reports/:id')
-    async deleteReport(@Param('id') id: number, @Query('userId') userId: number) {
+    async deleteReport(@Param('id') id: number) {
         const report = await this.reportsService.findReportById(id);
         if (!report) return null;
-        await this.reportsService.deleteReport(id, userId);
+        await this.reportsService.deleteReportAdmin(id);
         return { message: `Reporte ${id} eliminado correctamente` };
     }
+
+    // ESTO APENAS LO ESTOY HACIENDO PARA LA WEB
+    //=============== CATEGORÍAS ===============
+    @ApiOperation({ summary: 'Listar todas las categorías' })
+    @ApiResponse({ status: 200, description: 'Categorías obtenidas correctamente', type: [Categories] })
+    @Get('/categories')
+    async findAllCategories() {
+        return this.reportsService.findAllCategories();
+    }
+
+    @ApiOperation({ summary: 'Crear nueva categoría' })
+    @ApiResponse({ status: 201, description: 'Categoría creada correctamente', type: Categories })
+    @Post('/categories')
+    async createCategory(@Body() dto: Categories) {
+        return this.reportsService.createCategory(dto);
+    }
+
+    @ApiOperation({ summary: 'Actualizar categoría existente' })
+    @ApiParam({ name: 'id', type: Number })
+    @ApiResponse({ status: 200, description: 'Categoría actualizada correctamente', type: Categories })
+    @Put('/categories/:id')
+    async updateCategory(@Param('id') id: number, @Body() dto: Categories) {
+        return this.reportsService.updateCategory(id, dto.name);
+    }
+
+    @ApiOperation({ summary: 'Eliminar categoría' })
+    @ApiParam({ name: 'id', type: Number })
+    @ApiResponse({ status: 200, description: 'Categoría eliminada correctamente' })
+    @Delete('/categories/:id')
+    async deleteCategory(@Param('id') id: number) {
+        return this.reportsService.deleteCategory(id);
+    }
+
+    // =============== ESTADÍSTICAS ===============
+    @Get('reports/stats')
+    async getReportsStats() {
+        const reports = await this.reportsService.findAllReports({});
+        const pending = reports.filter(r => r.status_id === 1).length;
+        const approved = reports.filter(r => r.status_id === 2).length;
+        const rejected = reports.filter(r => r.status_id === 3).length;
+        return { pending, approved, rejected, total: reports.length };
+    }
+
+    @Get('reports/by-category')
+    async getReportsByCategory() {
+        const categories = await this.reportsService.findAllCategories();
+        const reports = await this.reportsService.findAllReports({});
+        const data = categories.map(c => ({
+            category: c.name,
+            count: reports.filter(r => r.category_id === c.id).length
+        }));
+        return data;
+    }
+
 }
+
+
 
 
 

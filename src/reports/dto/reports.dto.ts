@@ -148,7 +148,7 @@ export class Report {
  */
 export class Categories {
   @ApiProperty({ example: 1 })
-  id: number;
+  id?: number;
   @ApiProperty({ example: 'Fraude en línea' })
   name: string;
 }
