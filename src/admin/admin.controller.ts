@@ -10,22 +10,7 @@ import { Report, Categories, CategoryDTO } from "src/reports/dto/reports.dto";
 export class AdminController {
     constructor(private readonly userService: UserService, private readonly reportsService: ReportsService) {}
 
-    //=============== Usuarios ===============
-    @ApiOperation({ summary: 'Buscar usuario por ID' })
-    @ApiParam({ name: 'id', type: Number, description: 'ID del usuario' })
-    @ApiResponse({ status: 200, description: 'Usuario encontrado exitosamente' })
-    @ApiResponse({ status: 404, description: 'Usuario no encontrado', type: User})
-    @Get('users/:id')
-    async findUserById(@Param('id') id: number) {
-        const user = await this.userService.findUserById(id);
-        if (!user) return null;
-        return {
-            full_name: user.full_name,
-            email: user.email,
-        };
-    }
-
-
+    //=============== USUARIOS ===============
     @ApiOperation({ summary: 'Listar todos los usuarios' })
     @ApiResponse({ status: 200, description: 'Lista de usuarios obtenida exitosamente', type: [User] })
     @Get('users')
@@ -38,7 +23,6 @@ export class AdminController {
             email: user.email,
         }));
     }
-
 
     @ApiOperation({ summary: 'Actualizar Usuario (Admin)' })
     @ApiParam({ name: 'id', type: Number, description: 'ID del usuario a actualizar' })
@@ -68,7 +52,7 @@ export class AdminController {
         return { status: 200, message: `Usuario ${user.full_name} eliminado correctamente` };
     }
 
-    //=============== Reportes ===============
+    //=============== REPORTES ===============
     @ApiOperation({ summary: 'Listar reportes con filtros (Admin)' })
     @ApiQuery({ name: 'category_id', required: false, type: Number, description: 'Filtrar por categoría' })
     @ApiQuery({ name: 'status_id', required: false, type: Number, description: 'Filtrar por estado' })
@@ -176,8 +160,6 @@ export class AdminController {
         return data;
     }
 
-    // GET /admin/reports/recent
-    // GET /admin/reports/recent?limit=10&offset=0
     @ApiOperation({ summary: 'Obtener reportes recientes (los más recientes primero)' })
     @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Cantidad de reportes a traer (por defecto 5)' })
     @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset para paginación (por defecto 0)' })

@@ -10,6 +10,7 @@ import type { AuthenticatedRequest } from "src/common/interfaces/authenticated-r
 export class UsersRepository{
     constructor(private readonly db: DbService) {}
 
+    // =============== CREAR USUARIO ===============
     async createUser(email:string, full_name:string, password:string): Promise<User | null>{
         try {
             const sql= `INSERT INTO users (email, full_name, password_hash, salt) 
@@ -31,7 +32,7 @@ export class UsersRepository{
         }   
     }
 
-
+    // =============== ENCONTRAR USUARIOS ===============
     async findUserByEmail(email:string): Promise<User | null>{
         const sql= `SELECT * FROM users WHERE email='${email}' LIMIT 1`;
         const [rows] = await this.db.getPool().query(sql);
@@ -53,6 +54,7 @@ export class UsersRepository{
         return result || [];
     }
 
+    // =============== ACTUALIZAR USUARIO ===============
     // Hace queries SQL, no lógica de negocio
     async updateUser(id: number, email?: string, full_name?: string) {
         // Construir dinámicamente SET solo con los campos que llegan
@@ -81,6 +83,7 @@ export class UsersRepository{
         return (rows as User[])[0] || null;
     }
 
+    // =============== ACTUALIZAR USUARIO (Admin) ===============
     async updateUserAdmin(id: number, email?: string, full_name?: string, newPasswordHash?: string) {
         // Construir dinámicamente SET solo con los campos que llegan
         const fields: string[] = [];
@@ -113,12 +116,14 @@ export class UsersRepository{
         return (rows as User[])[0] || null;
     }
 
+    // =============== ACTUALIZAR CONTRASEÑA USUARIO ===============
     async updatePasswordUser(id: number, newPasswordHash: string) {
         const sql = `UPDATE users SET password_hash = ? WHERE id = ?`;
         await this.db.getPool().query(sql, [newPasswordHash, id]);
         return true;
     }
 
+    // =============== ELIMINAR USUARIO ===============
     async deleteUser(id: number): Promise<void> {
         const sql = `DELETE FROM users WHERE id = ?`;
         await this.db.getPool().query(sql, [id]);

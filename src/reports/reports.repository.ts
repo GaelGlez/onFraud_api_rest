@@ -9,7 +9,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 export class ReportsRepository {
   constructor(private readonly db: DbService) {}
 
-    // ===== CREAR =====
+    // =============== CREAR REPORTE ===============
     async createReport(dto: CreateReportDto, userId: number) {
     const [result]: any = await this.db.getPool().query(
       `INSERT INTO Reports (user_id, category_id, status_id, title, url, description)
@@ -26,7 +26,7 @@ export class ReportsRepository {
     return result.insertId;
   }
 
-  // ===== EVIDENCIAS =====
+  // // =============== EVIDENCIAS ===============
   async findEvidencesByReportId(reportId: number) {
     const [rows]: any = await this.db
       .getPool()
@@ -64,7 +64,7 @@ export class ReportsRepository {
     return { message: 'Evidencia eliminada correctamente' };
   }
 
-  // ===== CONSULTAS DE REPORTES =====
+  // // =============== CONSULTAS DE REPORTES ===============
   async findByReportId(id: number): Promise<Report | null> {
     const [rows] = await this.db
       .getPool()
@@ -111,7 +111,6 @@ export class ReportsRepository {
     const [rows] = await this.db.getPool().query(sql, values);
     return rows as Report[];
   }
-
 
   async findAllReports(filters: {
     categoryId?: number;
@@ -199,7 +198,7 @@ export class ReportsRepository {
     return rows as Report[];
   }
 
-  // ===== ELIMINAR =====
+  // ===== ELIMINAR REPORTE =====
   async deleteReport(id: number) {
     await this.db.getPool().query('DELETE FROM reports WHERE id = ?', [id]);
     return { message: 'Reporte eliminado correctamente' };
@@ -213,7 +212,7 @@ export class ReportsRepository {
     return this.findByReportId(id);
   }
 
-  // =====  CATEGORÍAS =====
+  // =====  CATEGORÍAS DE REPORTES =====
   async findAllCategories(): Promise<Categories[]> {
     const [rows]: any = await this.db
       .getPool()
