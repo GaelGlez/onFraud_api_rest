@@ -1,31 +1,16 @@
-import { Body, Controller, Put, Get, Param, Query  } from "@nestjs/common";
+import { Body, Controller, Put, Get, Param, Query, Post, Delete } from "@nestjs/common";
 import { UserService } from "../users/users.service";
 import { ApiOperation, ApiTags, ApiParam, ApiResponse, ApiQuery } from "@nestjs/swagger";
-import { UpdateUserDto, User } from "../users/dto/users.dto";
+import { UpdateUserAdminDto, User } from "../users/dto/users.dto";
 import { ReportsService } from "../reports/reports.service";
-import { Delete } from "@nestjs/common/decorators";
-import { Report } from "src/reports/dto/reports.dto";
+import { Report, Categories, CategoryDTO } from "src/reports/dto/reports.dto";
 
 @ApiTags('Modulo de Administracion')
 @Controller('admin')
 export class AdminController {
     constructor(private readonly userService: UserService, private readonly reportsService: ReportsService) {}
 
-    @ApiOperation({ summary: 'Buscar usuario por ID' })
-    @ApiParam({ name: 'id', type: Number, description: 'ID del usuario' })
-    @ApiResponse({ status: 200, description: 'Usuario encontrado exitosamente' })
-    @ApiResponse({ status: 404, description: 'Usuario no encontrado', type: User})
-    @Get('users/:id')
-    async findUserById(@Param('id') id: number) {
-        const user = await this.userService.findUserById(id);
-        if (!user) return null;
-        return {
-            full_name: user.full_name,
-            email: user.email,
-        };
-    }
-
-
+    //=============== USUARIOS ===============
     @ApiOperation({ summary: 'Listar todos los usuarios' })
     @ApiResponse({ status: 200, description: 'Lista de usuarios obtenida exitosamente', type: [User] })
     @Get('users')
@@ -33,19 +18,19 @@ export class AdminController {
         const users = await this.userService.findAllUsers();
         if (!users) return null;
         return users.map(user => ({
+            id: user.id,
             full_name: user.full_name,
             email: user.email,
         }));
     }
 
-
     @ApiOperation({ summary: 'Actualizar Usuario (Admin)' })
     @ApiParam({ name: 'id', type: Number, description: 'ID del usuario a actualizar' })
-    @ApiResponse({ status: 200, description: 'Usuario actualizado correctamente', type: UpdateUserDto })
+    @ApiResponse({ status: 200, description: 'Usuario actualizado correctamente', type: UpdateUserAdminDto })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
     @Put('users/:id')
-    async updateUser(@Param('id') userId: number, @Body() updateDto: UpdateUserDto) {
-        const updateUser = await this.userService.updateUser(userId, updateDto);
+    async updateUser(@Param('id') userId: number, @Body() updateDto: UpdateUserAdminDto) {
+        const updateUser = await this.userService.updateUserAdmin(userId, updateDto);
         if (!updateUser) return null;
         return {
             full_name: updateUser.full_name,
@@ -53,7 +38,21 @@ export class AdminController {
         };
     }
 
-    //Reportes ---------------------------------------------------
+    @ApiOperation({ summary: 'Eliminar usuario por ID' })
+    @ApiParam({ name: 'id', type: Number, description: 'ID del usuario a eliminar' })
+    @ApiResponse({ status: 200, description: 'Usuario eliminado exitosamente' })
+    @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+    @Delete('users/:id')
+    async deleteUser(@Param('id') userId: number) {
+        const user = await this.userService.findUserById(userId);
+        if (!user) {
+            return { status: 404, message: 'Usuario no encontrado' };
+        }
+        await this.userService.deleteUser(userId);
+        return { status: 200, message: `Usuario ${user.full_name} eliminado correctamente` };
+    }
+
+    //=============== REPORTES ===============
     @ApiOperation({ summary: 'Listar reportes con filtros (Admin)' })
     @ApiQuery({ name: 'category_id', required: false, type: Number, description: 'Filtrar por categoría' })
     @ApiQuery({ name: 'status_id', required: false, type: Number, description: 'Filtrar por estado' })
@@ -65,24 +64,20 @@ export class AdminController {
         @Query('category_id') categoryId?: number,
         @Query('status_id') statusId?: number,
         @Query('url') url?: string,
+        @Query('userFilter') userFilter?: 'onlyAnonymous' | 'onlyUsers', // nuevo
+        @Query('user_id') userId?: number,
         @Query('q') keyword?: string
     ) {
-        const reports = await this.reportsService.findAllReports({ categoryId, statusId, url, keyword });
+        const reports = await this.reportsService.findAllReports({
+            categoryId,
+            statusId,
+            url,
+            userFilter,
+            userId,
+            keyword
+        });
         return reports;
     }
-
-
-    @ApiOperation({ summary: 'Ver detalle de un reporte (Admin)' })
-    @ApiParam({ name: 'id', type: Number, description: 'ID del reporte' })
-    @ApiResponse({ status: 200, description: 'Reporte encontrado', type: Report })
-    @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
-    @Get('reports/:id')
-    async getReportById(@Param('id') id: number) {
-        const report = await this.reportsService.findReportById(id);
-        if (!report) return null;
-        return report;
-    }
-
 
     @ApiOperation({ summary: 'Actualizar estado de un reporte (Admin)' })
     @ApiParam({ name: 'id', type: Number, description: 'ID del reporte' })
@@ -99,17 +94,87 @@ export class AdminController {
 
     @ApiOperation({ summary: 'Eliminar reporte (Admin)' })
     @ApiParam({ name: 'id', type: Number, description: 'ID del reporte a eliminar' })
-    @ApiQuery({ name: 'userId', type: Number, required: true, description: 'ID del usuario que realiza la eliminación' })
     @ApiResponse({ status: 200, description: 'Reporte eliminado correctamente' })
     @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
     @Delete('reports/:id')
-    async deleteReport(@Param('id') id: number, @Query('userId') userId: number) {
+    async deleteReport(@Param('id') id: number) {
         const report = await this.reportsService.findReportById(id);
         if (!report) return null;
-        await this.reportsService.deleteReport(id, userId);
+        await this.reportsService.deleteReportAdmin(id);
         return { message: `Reporte ${id} eliminado correctamente` };
     }
+
+    //=============== CATEGORÍAS ===============
+    @ApiOperation({ summary: 'Listar todas las categorías' })
+    @ApiResponse({ status: 200, description: 'Categorías obtenidas correctamente', type: [Categories] })
+    @Get('/categories')
+    async findAllCategories() {
+        return this.reportsService.findAllCategories();
+    }
+
+    @ApiOperation({ summary: 'Crear nueva categoría' })
+    @ApiResponse({ status: 201, description: 'Categoría creada correctamente', type: Categories })
+    @Post('/categories')
+    async createCategory(@Body() dto: CategoryDTO) {
+        return this.reportsService.createCategory(dto);
+    }
+
+    @ApiOperation({ summary: 'Actualizar categoría existente' })
+    @ApiParam({ name: 'id', type: Number })
+    @ApiResponse({ status: 200, description: 'Categoría actualizada correctamente', type: Categories })
+    @Put('/categories/:id')
+    async updateCategory(@Param('id') id: number, @Body() dto: CategoryDTO) {
+        return this.reportsService.updateCategory(id, dto.name);
+    }
+
+    @ApiOperation({ summary: 'Eliminar categoría' })
+    @ApiParam({ name: 'id', type: Number })
+    @ApiResponse({ status: 200, description: 'Categoría eliminada correctamente' })
+    @Delete('/categories/:id')
+    async deleteCategory(@Param('id') id: number) {
+        return this.reportsService.deleteCategory(id);
+    }
+
+    // =============== ESTADÍSTICAS ===============
+    @ApiOperation({ summary: 'Obtener estadísticas de reportes' })
+    @ApiResponse({ status: 200, description: 'Estadísticas de reportes obtenidas correctamente' })
+    @Get('reports/stats')
+    async getReportsStats() {
+        const reports = await this.reportsService.findAllReports({});
+        const pending = reports.filter(r => r.status_id === 1).length;
+        const approved = reports.filter(r => r.status_id === 2).length;
+        const rejected = reports.filter(r => r.status_id === 3).length;
+        return { pending, approved, rejected, total: reports.length };
+    }
+
+    @ApiOperation({ summary: 'Obtener número de reportes por categoría' })
+    @ApiResponse({ status: 200, description: 'Número de reportes por categoría obtenido correctamente' })
+    @Get('reports/by-category')
+    async getReportsByCategory() {
+        const categories = await this.reportsService.findAllCategories();
+        const reports = await this.reportsService.findAllReports({});
+        const data = categories.map(c => ({
+            category: c.name,
+            count: reports.filter(r => r.category_id === c.id).length
+        }));
+        return data;
+    }
+
+    @ApiOperation({ summary: 'Obtener reportes recientes (los más recientes primero)' })
+    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Cantidad de reportes a traer (por defecto 5)' })
+    @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset para paginación (por defecto 0)' })
+    @ApiResponse({ status: 200, description: 'Reportes recientes obtenidos correctamente', type: [Report] })
+    @Get('reports/recent')
+    async getRecentReports(
+    @Query('limit') limit: number = 5,
+    @Query('offset') offset: number = 0
+    ) {
+    const reports = await this.reportsService.findAllReports({ limit, offset });
+    return reports;
+    }
 }
+
+
 
 
 

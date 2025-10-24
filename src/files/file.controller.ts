@@ -11,7 +11,7 @@ import { FileUploadDto, DeleteFileDto, FileResponseDto } from './dto/file.dto';
 @Controller('files')
 export class FileController {
 
-    // Subir archivo
+    // =============== SUBIR ARCHIVO ===============
     @Post('upload')
     @UseInterceptors(
         FileInterceptor('file', {
@@ -42,7 +42,7 @@ export class FileController {
         };
     }
 
-    // Eliminar archivo
+    // =============== ELIMINAR ARCHIVO ===============
     @Delete('delete')
     @ApiOperation({ summary: 'Eliminar un archivo' })
     @ApiResponse({ status: 200, description: 'Archivo eliminado correctamente.' })

@@ -10,7 +10,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 export class UsersController {
     constructor(private readonly userService: UserService) {}
 
-    // Obtener perfil del usuario autenticado
+    // =============== OBTENER PERFIL (Autenticado) ===============
     @ApiOperation({ summary: 'Obtener perfil del usuario autenticado' })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
@@ -23,7 +23,7 @@ export class UsersController {
         return { profile: user };
     }
 
-    // Actualizar información del usuario
+    // =============== ACTUALIZAR DATOS DEL USUARIO (Autenticado) ===============
     @ApiOperation({ summary: 'Actualizar datos del usuario' })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
@@ -36,7 +36,7 @@ export class UsersController {
         return this.userService.updateUser(userId, updateDto);
     }
 
-    // Actualizar contraseña
+    // =============== ACTUALIZAR CONTRASEÑA (Autenticado) ===============
     @ApiOperation({ summary: 'Actualizar contraseña del usuario' })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)

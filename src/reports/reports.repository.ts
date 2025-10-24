@@ -1,13 +1,15 @@
 /* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { CreateReportDto, UpdateReportDto, Report, Categories } from './dto/reports.dto';
+import { CreateReportDto, Report, Categories, CategoryDTO } from './dto/reports.dto';
+import { HttpException, HttpStatus } from '@nestjs/common';
+
 
 @Injectable()
 export class ReportsRepository {
   constructor(private readonly db: DbService) {}
 
-    // ===== CREAR =====
+    // =============== CREAR REPORTE ===============
     async createReport(dto: CreateReportDto, userId: number) {
     const [result]: any = await this.db.getPool().query(
       `INSERT INTO Reports (user_id, category_id, status_id, title, url, description)
@@ -24,7 +26,7 @@ export class ReportsRepository {
     return result.insertId;
   }
 
-  // ===== EVIDENCIAS =====
+  // // =============== EVIDENCIAS ===============
   async findEvidencesByReportId(reportId: number) {
     const [rows]: any = await this.db
       .getPool()
@@ -62,7 +64,7 @@ export class ReportsRepository {
     return { message: 'Evidencia eliminada correctamente' };
   }
 
-  // ===== CONSULTAS DE REPORTES =====
+  // // =============== CONSULTAS DE REPORTES ===============
   async findByReportId(id: number): Promise<Report | null> {
     const [rows] = await this.db
       .getPool()
@@ -110,11 +112,12 @@ export class ReportsRepository {
     return rows as Report[];
   }
 
-
   async findAllReports(filters: {
     categoryId?: number;
     statusId?: number;
     url?: string;
+    userFilter?: 'onlyAnonymous' | 'onlyUsers';
+    userId?: number;
     keyword?: string;
     limit?: number;
     offset?: number;
@@ -122,29 +125,48 @@ export class ReportsRepository {
     const conditions: string[] = [];
     const values: any[] = [];
 
-    if (filters.categoryId) {
+    if (filters.categoryId !== undefined) {
       conditions.push('category_id = ?');
       values.push(filters.categoryId);
     }
-    if (filters.statusId) {
+    if (filters.statusId !== undefined) {
       conditions.push('status_id = ?');
       values.push(filters.statusId);
     }
-    if (filters.url) {
+    if (filters.url !== undefined) {
       conditions.push('url = ?');
       values.push(filters.url);
     }
-    if (filters.keyword) {
-      const keyword = filters.keyword.toLowerCase();
+
+    // Filtro de usuario / anónimo
+    if (filters.userFilter) {
+      switch (filters.userFilter) {
+        case 'onlyAnonymous':
+          conditions.push('user_id IS NULL');
+          break;
+        case 'onlyUsers':
+          conditions.push('user_id IS NOT NULL');
+          break;
+      }
+    }
+
+    // Filtro por usuario específico (si se pasa)
+    if (filters.userId !== undefined) {
+      conditions.push('user_id = ?');
+      values.push(filters.userId);
+    }
+
+    // Filtro por keyword
+    if (filters.keyword !== undefined) {
+      const keyword = `%${filters.keyword.toLowerCase()}%`;
       conditions.push(`(
         LOWER(r.title) LIKE ? OR 
         LOWER(r.description) LIKE ? OR 
         LOWER(c.name) LIKE ? OR 
         LOWER(r.url) LIKE ?
       )`);
-      values.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+      values.push(keyword, keyword, keyword, keyword);
     }
-
 
     let sql = `
       SELECT r.*,
@@ -160,13 +182,14 @@ export class ReportsRepository {
     if (conditions.length > 0) {
       sql += ' WHERE ' + conditions.join(' AND ');
     }
-    sql += ' ORDER BY id DESC';
 
-    if (filters.limit) {
+    sql += ' ORDER BY r.id DESC';
+
+    if (filters.limit !== undefined) {
       sql += ' LIMIT ?';
       values.push(filters.limit);
     }
-    if (filters.offset) {
+    if (filters.offset !== undefined) {
       sql += ' OFFSET ?';
       values.push(filters.offset);
     }
@@ -175,51 +198,13 @@ export class ReportsRepository {
     return rows as Report[];
   }
 
-  // ===== ACTUALIZAR =====
-  // NO SE USA PARA NADA
-  /*async updateReport(id: number, dto: UpdateReportDto): Promise<Report | null> {
-    const set: string[] = [];
-    const values: any[] = [];
-
-    if (dto.title !== undefined) {
-      set.push('title = ?');
-      values.push(dto.title);
-    }
-    if (dto.description !== undefined) {
-      set.push('description = ?');
-      values.push(dto.description);
-    }
-    if (dto.url !== undefined) {
-      set.push('url = ?');
-      values.push(dto.url);
-    }
-    if (dto.category_id !== undefined) {
-      set.push('category_id = ?');
-      values.push(dto.category_id);
-    }
-    if (dto.status_id !== undefined) {
-      set.push('status_id = ?');
-      values.push(dto.status_id);
-    }
-
-    if (set.length === 0) {
-      return await this.findByReportId(id);
-    }
-
-    const sql = `UPDATE reports SET ${set.join(', ')}, updated_at = NOW() WHERE id = ?`;
-    values.push(id);
-
-    await this.db.getPool().query(sql, values);
-
-    return this.findByReportId(id);
-  }*/
-
-  // ===== ELIMINAR =====
+  // ===== ELIMINAR REPORTE =====
   async deleteReport(id: number) {
     await this.db.getPool().query('DELETE FROM reports WHERE id = ?', [id]);
     return { message: 'Reporte eliminado correctamente' };
   }
 
+  // ===== ACTUALIZAR ESTADO REPORTE =====
   async updateReportStatus(id: number, statusId: number): Promise<Report | null> {
     const sql = `UPDATE reports SET status_id = ?, updated_at = NOW() WHERE id = ?`;
     const values = [statusId, id];
@@ -227,11 +212,45 @@ export class ReportsRepository {
     return this.findByReportId(id);
   }
 
-  // ===== LISTAR CATEGORÍAS =====
+  // =====  CATEGORÍAS DE REPORTES =====
   async findAllCategories(): Promise<Categories[]> {
     const [rows]: any = await this.db
       .getPool()
       .query('SELECT * FROM categories ORDER BY name ASC');
     return rows;
+  }
+
+  async createCategory(dto: CategoryDTO) {
+    const [result]: any = await this.db.getPool().query(
+        'INSERT INTO categories (name) VALUES (?)', [dto.name]
+    );
+    return { id: result.insertId, name: dto.name };
+  }
+
+  async updateCategory(id: number, name: string) {
+    await this.db.getPool().query('UPDATE categories SET name = ? WHERE id = ?', [name, id]);
+    return { id, name };
+  }
+
+  async deleteCategory(id: number) {
+    // Contar cuántos reportes usan esta categoría
+    const [rows]: any = await this.db
+      .getPool()
+      .query('SELECT COUNT(*) AS total FROM reports WHERE category_id = ?', [id]);
+
+    const totalReports = rows[0]?.total || 0;
+
+    // Lanzar excepción si hay reportes asociados
+    if (totalReports > 0) {
+      throw new HttpException(
+        `No se puede eliminar la categoría porque tiene ${totalReports} reporte(s) asociado(s).`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    // Si no hay reportes, borrar la categoría
+    await this.db.getPool().query('DELETE FROM categories WHERE id = ?', [id]);
+
+    return { message: `Categoría ${id} eliminada correctamente` };
   }
 }

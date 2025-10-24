@@ -3,7 +3,7 @@
 import { Injectable } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { sha256 } from "src/util/hash/hash.util";
-import { UpdateUserDto } from "./dto/users.dto";
+import { UpdateUserAdminDto, UpdateUserDto } from "./dto/users.dto";
 import { LoginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
 
 
@@ -11,15 +11,18 @@ import { LoginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
 export class UserService {
     constructor(private readonly usersRepository: UsersRepository) {}s
 
+    // =============== CREAR USUARIO ===============
     async createUser(createUserDto: CreateUserDto) {
         const hashed_password= sha256(createUserDto.password);
         return this.usersRepository.createUser(createUserDto.email, createUserDto.full_name, hashed_password);
     }
 
+    // =============== ENCONTRAR USUARIOS ===============
     async findUserById(id: number) {
         return this.usersRepository.findUserById(id);
     }
 
+    // =============== VALIDAR USUARIO (Login) ===============
     async validateUser(loginDto: LoginUserDto) {
         const user = await this.usersRepository.findUserByEmail(loginDto.email);
         if (!user) {
@@ -29,10 +32,12 @@ export class UserService {
         return isValid ? user : null;
     }
 
+    // =============== ENCONTRAR TODOS LOS USUARIOS ===============
     async findAllUsers() {
         return this.usersRepository.findAllUsers();
     }
 
+    // =============== ACTUALIZAR USUARIO ===============
     async updateUser(userId: number, updateDto: UpdateUserDto) {
         const { email, full_name } = updateDto;
 
@@ -42,6 +47,21 @@ export class UserService {
         return this.usersRepository.updateUser(userId, email, full_name);
     }
 
+    // =============== ACTUALIZAR USUARIO (Admin) ===============
+    async updateUserAdmin(userId: number, updateDto: UpdateUserAdminDto) {
+        const { email, full_name, password } = updateDto;
+
+        if (!email && !full_name && !password) {
+            throw new Error("No hay campos para actualizar");
+        }
+        let hashedPassword: string | undefined = undefined;
+        if (password) {
+            hashedPassword = sha256(password);
+        }
+        return this.usersRepository.updateUserAdmin(userId, email, full_name, hashedPassword);
+    }
+
+    // =============== ACTUALIZAR CONTRASEÑA ===============
     async updatePassword(userId: number, updatePasswordDto: { oldPassword: string; newPassword: string; }) {
         const user = await this.usersRepository.findUserById(userId);
         if (!user) {
@@ -55,6 +75,7 @@ export class UserService {
         return this.usersRepository.updatePasswordUser(userId, user.password_hash);
     }
 
+    // =============== VALIDAR ADMIN (Login) ===============
     async validateAdmin(loginDto: LoginUserDto) {
         const user = await this.usersRepository.findUserByEmail(loginDto.email);
         if (!user) return null;
@@ -66,7 +87,8 @@ export class UserService {
 
         return user;
     }
-
+    
+    // =============== ELIMINAR USUARIO ===============
     async deleteUser(userId: number): Promise<void> {
         await this.usersRepository.deleteUser(userId);
     }

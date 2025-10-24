@@ -152,3 +152,11 @@ export class Categories {
   @ApiProperty({ example: 'Fraude en línea' })
   name: string;
 }
+
+export class CategoryDTO {
+  @ApiProperty({ example: 'Nuevo nombre de categoría' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+

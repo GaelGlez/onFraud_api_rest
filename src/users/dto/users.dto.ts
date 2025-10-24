@@ -21,6 +21,36 @@ export class UpdateUserDto {
     full_name?: string;
 }
 
+export class UpdateUserAdminDto {
+    @ApiProperty({
+        example: 'gael@example.com',
+        required: false,
+        description: 'Correo electrónico del usuario (opcional)',
+    })
+    @IsOptional()
+    @IsEmail({}, { message: 'Debe ser un email válido' })
+    email?: string;
+
+    @ApiProperty({
+        example: 'Gael González',
+        required: false,
+        description: 'Nombre completo del usuario (opcional)',
+    })
+    @IsOptional()
+    @IsString({ message: 'Debe ser un string' })
+    full_name?: string;
+
+    @ApiProperty({
+        example: 'password1',
+        required: false,
+        description: 'Contraseña del usuario (opcional)',
+    })
+    @IsOptional()
+    @IsString({ message: 'Debe ser un string' })
+    @MinLength(9, { message: 'La contraseña debe tener al menos 9 caracteres' })
+    password?: string;
+}
+
 
 export class UpdatePasswordDto {
     @ApiProperty({

@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException, ForbiddenException, ConflictException  } from '@nestjs/common';
 import { ReportsRepository } from './reports.repository';
-import { CreateReportDto, UpdateReportDto, Report, Categories } from './dto/reports.dto';
+import { CreateReportDto, UpdateReportDto, Report, Categories, CategoryDTO } from './dto/reports.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -36,16 +36,13 @@ export class ReportsService {
     return this.reportsRepository.findByReportId(reportId);
   }
 
-  // ===== LISTAR CATEGORÍAS =====
-  async findAllCategories(): Promise<Categories[]> {
-    return this.reportsRepository.findAllCategories();
-  }
-
   // ===== LISTAR CON FILTROS =====
   async findAllReports(filters: {
     categoryId?: number;
     statusId?: number;
     url?: string;
+    userId?: number;
+    userFilter?: 'onlyAnonymous' | 'onlyUsers';
     keyword?: string;
     limit?: number;
     offset?: number;
@@ -67,23 +64,6 @@ export class ReportsService {
     return report;
   }
 
-  // ===== EDITAR (solo dueño + pendiente) =====
-  // NO SE USA 
-  /*async updateReport(id: number, dto: UpdateReportDto, userId: number): Promise<Report> {
-    const report = await this.reportsRepository.findByReportId(id);
-    if (!report) {
-      throw new NotFoundException(`Reporte con id ${id} no encontrado`);
-    }
-    if (report.user_id !== userId) {
-      throw new ForbiddenException(`No puedes editar un reporte que no es tuyo`);
-    }
-    if (report.status_id !== 1) {
-      throw new ForbiddenException(`Solo se pueden editar reportes en estado pendiente`);
-    }
-    const updated = await this.reportsRepository.updateReport(id, dto);
-    return updated ?? report;
-  }*/
-
   // ===== ELIMINAR (solo dueño + pendiente) =====
   async deleteReport(id: number, userId: number) {
     const report = await this.reportsRepository.findByReportId(id);
@@ -91,7 +71,7 @@ export class ReportsService {
     if (report.user_id !== userId) throw new ForbiddenException(`No puedes eliminar un reporte que no es tuyo`);
     if (report.status_id !== 1) throw new ForbiddenException(`Solo se pueden eliminar reportes en estado pendiente`);
 
-    // 1️⃣ Eliminar todas las evidencias físicas s
+    // Eliminar todas las evidencias físicas s
     const evidences = await this.reportsRepository.findEvidencesByReportId(id);
     for (const ev of evidences) {
       const filePath = path.join(__dirname, '../../public', ev.file_path);
@@ -100,13 +80,13 @@ export class ReportsService {
       }
     }
 
-    // 2️⃣ Eliminar carpeta del reporte si existe
+    // Eliminar carpeta del reporte si existe
     const reportDir = path.join(__dirname, '../../public/uploads/reports', String(id));
     if (fs.existsSync(reportDir)) {
       fs.rmdirSync(reportDir, { recursive: true });
     }
 
-    // 3️⃣ Eliminar la base de datos (evidencias + reporte)
+    // Eliminar la base de datos (evidencias + reporte)
     // Primero eliminamos evidencias de BD
     for (const ev of evidences) {
       await this.reportsRepository.deleteEvidence(ev.id);
@@ -116,40 +96,43 @@ export class ReportsService {
     return this.reportsRepository.deleteReport(id);
   }
 
+  // ===== ELIMINAR REPORTE (ADMIN) =====
+  async deleteReportAdmin(id: number) {
+    const report = await this.reportsRepository.findByReportId(id);
+    if (!report) throw new NotFoundException(`Reporte con id ${id} no encontrado`);
 
+    // Eliminar todas las evidencias físicas
+    const evidences = await this.reportsRepository.findEvidencesByReportId(id);
+    for (const ev of evidences) {
+      const filePath = path.join(__dirname, '../../public', ev.file_path);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    // Eliminar carpeta del reporte si existe
+    const reportDir = path.join(__dirname, '../../public/uploads/reports', String(id));
+    if (fs.existsSync(reportDir)) {
+      fs.rmdirSync(reportDir, { recursive: true });
+    }
+
+    // Eliminar la base de datos (evidencias + reporte)
+    // Primero eliminamos evidencias de BD
+    for (const ev of evidences) {
+      await this.reportsRepository.deleteEvidence(ev.id);
+    }
+
+    // Luego eliminamos el reporte
+    return this.reportsRepository.deleteReport(id);
+  }
+
+  
    // ===== EVIDENCIAS =====
   async getEvidences(reportId: number) {
     const report = await this.reportsRepository.findByReportId(reportId);
     if (!report) throw new NotFoundException(`Reporte con id ${reportId} no encontrado`);
     return this.reportsRepository.findEvidencesByReportId(reportId);
   }
-
-  /*async addEvidence(reportId: number, files: string[], userId: number) {
-    const report = await this.reportsRepository.findByReportId(reportId);
-    if (!report) throw new NotFoundException(`Reporte con id ${reportId} no encontrado`);
-    if (report.user_id !== userId) throw new ForbiddenException(`No puedes modificar evidencias de un reporte ajeno`);
-    if (report.status_id !== 1) throw new ForbiddenException(`Solo se pueden añadir evidencias si está pendiente`);
-
-    const finalDir = path.join(__dirname, '../../public/uploads/reports', String(reportId));
-    if (!fs.existsSync(finalDir)) fs.mkdirSync(finalDir, { recursive: true });
-
-    for (const tmp of files) {
-      const tmpPath = path.join(__dirname, '../../public/uploads', tmp);
-      const destPath = path.join(finalDir, path.basename(tmp));
-
-      fs.renameSync(tmpPath, destPath);
-
-      const fileKey = path.basename(tmp);
-      await this.reportsRepository.addEvidence(
-        reportId,
-        fileKey,
-        `uploads/reports/${reportId}/${path.basename(tmp)}`,
-        path.extname(tmp),
-      );
-    }
-
-    return this.reportsRepository.findByReportId(reportId);
-  }*/
 
   async deleteEvidence(reportId: number, evidenceId: number, userId: number) {
     const report = await this.reportsRepository.findByReportId(reportId);
@@ -177,6 +160,23 @@ export class ReportsService {
     if (!report) throw new NotFoundException(`Reporte con id ${reportId} no encontrado`);
     if (report.status_id === statusId) throw new ConflictException(`El reporte ya está en estado ${statusId}`);
     return this.reportsRepository.updateReportStatus(reportId, statusId); 
+  }
+
+    // ===== CATEGORÍAS =====
+  async findAllCategories(): Promise<Categories[]> {
+    return this.reportsRepository.findAllCategories();
+  }
+
+  async createCategory(dto: CategoryDTO) {
+    return this.reportsRepository.createCategory(dto);
+  }
+
+  async updateCategory(id: number, name: string) {
+    return this.reportsRepository.updateCategory(id, name);
+  }
+
+  async deleteCategory(id: number) {
+    return this.reportsRepository.deleteCategory(id);
   }
 
 }

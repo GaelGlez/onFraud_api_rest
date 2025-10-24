@@ -41,7 +41,7 @@ export class ReportsController {
     return this.reportsService.createReport(dto, 0);
   }
 
-  // ====== LECTURA ======
+  // =============== LECTURA ===============
   // Listar categorías
   @Get('categories')
   @ApiOperation({ summary: 'Listar categorías disponibles para reportes' })
@@ -130,24 +130,7 @@ export class ReportsController {
     return this.reportsService.findAllReportsUser(userId, { statusId });
   }
 
-  // Detalle de un reporte
-  // NO SE USA PARA NADA
-  /*@Get(':id')
-  async getReport(@Param('id', ParseIntPipe) id: number): Promise<Report> {
-    return this.reportsService.findReportById(id);
-  }*/
-
-  // ====== EDICIÓN ======
-  // No se usa en nada 
-  /*@Put(':id')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  async updateReport(@Param('id', ParseIntPipe) id: number, @Body() updateReportDto: UpdateReportDto, @Req() req): Promise<Report> {
-    const userId = Number(req.user.userId);
-    return this.reportsService.updateReport(id, updateReportDto, userId);
-  }*/
-
-  // ====== ELIMINACIÓN ======
+  // ====== ELIMINACIÓN REPORTES ======
   // Eliminar un reporte propio (usuario autenticado)
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
@@ -183,30 +166,4 @@ export class ReportsController {
   async getEvidences(@Param('id', ParseIntPipe) reportId: number) {
     return this.reportsService.getEvidences(reportId);
   }
-  
-  // NO SE USA PARA NADA
-  /*@Post(':id/evidences')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  async addEvidence(
-    @Param('id', ParseIntPipe) reportId: number,
-    @Body('files') files: string[], // nombres que ya se subieron en /files/upload
-    @Req() req,
-  ) {
-    const userId = Number(req.user.userId);
-    return this.reportsService.addEvidence(reportId, files, userId);
-  }*/
-
-  // NO SE USA PARA NADA
-  /*@Delete(':id/evidences/:evidenceId')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  async deleteEvidence(
-    @Param('id', ParseIntPipe) reportId: number,
-    @Param('evidenceId', ParseIntPipe) evidenceId: number,
-    @Req() req,
-  ) {
-    const userId = Number(req.user.userId);
-    return this.reportsService.deleteEvidence(reportId, evidenceId, userId);
-  }*/
 }

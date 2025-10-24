@@ -16,7 +16,7 @@ export class AuthController {
         private readonly userService: UserService,
     ) {}
 
-    // REGISTRO
+    // =============== REGISTRO USUARIO  ===============
     @ApiOperation({ summary: 'Registrar un nuevo usuario' })
     @ApiBody({ type: CreateUserDto })
     @ApiResponse({
@@ -37,7 +37,7 @@ export class AuthController {
         return this.userService.createUser(createUserDto);
     }
 
-    // LOGIN USUARIO
+    // =============== LOGIN USUARIO ===============
     @ApiOperation({ summary: 'Login de usuario' })
     @ApiBody({ type: LoginUserDto })
     @ApiResponse({
@@ -62,7 +62,7 @@ export class AuthController {
         return { error: "Credenciales inválidas" };
     }
 
-    // LOGIN ADMIN
+    // =============== LOGIN ADMIN ===============
     @ApiOperation({ summary: 'Login de administrador' })
     @ApiBody({ type: LoginUserDto })
     @ApiResponse({
@@ -92,7 +92,7 @@ export class AuthController {
         return { access_token: token, refresh_token: refreshToken };
     }
 
-    // REFRESH TOKEN
+    // =============== REFRESH TOKEN ===============
     @ApiOperation({ summary: 'Generar nuevo access token mediante refresh token' })
     @ApiBody({ type: RefreshUserDto })
     @ApiResponse({
@@ -121,6 +121,7 @@ export class AuthController {
         return { error: "Invalid refresh token" };
     }
 
+    // =============== ELIMINAR CUENTA (Autenticado) ===============
     @ApiOperation({ summary: 'Eliminar la cuenta del usuario logueado' })
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: 'Cuenta eliminada exitosamente' })

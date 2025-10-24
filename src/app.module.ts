@@ -8,13 +8,15 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { FileModule } from './files/file.module';
 import { ReportsModule } from './reports/reports.module';
+import { ConfigModule } from '@nestjs/config';
+import { DbService } from './db/db.service';
 
 @Module({
-  imports: [DbModule, UsersModule, ReportsModule, AuthModule, AdminModule, FileModule, JwtModule.register({
+  imports: [ConfigModule.forRoot({ isGlobal: true }), DbModule, UsersModule, ReportsModule, AuthModule, AdminModule, FileModule, JwtModule.register({
     global: true,
-    secret: process.env.JWT_SECRET || 'supersecret',
+    secret: process.env.JWT_SECRET,
   })],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, DbService],
 })
 export class AppModule {}
