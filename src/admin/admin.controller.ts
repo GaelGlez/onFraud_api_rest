@@ -1,4 +1,4 @@
-import { Body, Controller, Put, Get, Param, Query, Post, Delete } from "@nestjs/common";
+import { Body, Controller, Put, Get, Param, Query, Post, Delete, BadRequestException } from "@nestjs/common";
 import { UserService } from "../users/users.service";
 import { ApiOperation, ApiTags, ApiParam, ApiResponse, ApiQuery } from "@nestjs/swagger";
 import { UpdateUserAdminDto, User } from "../users/dto/users.dto";
@@ -65,9 +65,11 @@ export class AdminController {
         @Query('status_id') statusId?: number,
         @Query('url') url?: string,
         @Query('userFilter') userFilter?: 'onlyAnonymous' | 'onlyUsers', // nuevo
-        @Query('user_id') userId?: number,
+        @Query('user_id') userIdParam?: string,
         @Query('q') keyword?: string
     ) {
+        const userId = userIdParam !== undefined ? Number(userIdParam) : undefined;
+        if (userId !== undefined && isNaN(userId)) throw new BadRequestException('user_id inválido');
         const reports = await this.reportsService.findAllReports({
             categoryId,
             statusId,
@@ -85,11 +87,17 @@ export class AdminController {
     @ApiResponse({ status: 200, description: 'Estado de reporte actualizado correctamente' })
     @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
     @Put('reports/:id/status/:statusId')
-    async updateReportStatus(@Param('id') reportId: number, @Param('statusId') statusId: number) {
+    async updateReportStatus(@Param('id') id: string, @Param('statusId') statusIdParam: string) {
+        const reportId = Number(id);
+        const statusId = Number(statusIdParam);
+        if (isNaN(reportId) || isNaN(statusId)) throw new BadRequestException('ID inválido');
+
         const report = await this.reportsService.findReportById(reportId);
         if (!report) return null;
+
         return this.reportsService.updateReportStatus(reportId, statusId);
     }
+
 
 
     @ApiOperation({ summary: 'Eliminar reporte (Admin)' })
@@ -123,17 +131,20 @@ export class AdminController {
     @ApiParam({ name: 'id', type: Number })
     @ApiResponse({ status: 200, description: 'Categoría actualizada correctamente', type: Categories })
     @Put('/categories/:id')
-    async updateCategory(@Param('id') id: number, @Body() dto: CategoryDTO) {
-        return this.reportsService.updateCategory(id, dto.name);
-    }
+    async updateCategory(@Param('id') id: string, @Body() dto: CategoryDTO) {
+        const categoryId = Number(id);
+        if (isNaN(categoryId)) throw new BadRequestException('ID inválido');
 
-    @ApiOperation({ summary: 'Eliminar categoría' })
-    @ApiParam({ name: 'id', type: Number })
-    @ApiResponse({ status: 200, description: 'Categoría eliminada correctamente' })
+        return this.reportsService.updateCategory(categoryId, dto.name);
+        }
+
     @Delete('/categories/:id')
-    async deleteCategory(@Param('id') id: number) {
-        return this.reportsService.deleteCategory(id);
-    }
+    async deleteCategory(@Param('id') id: string) {
+        const categoryId = Number(id);
+        if (isNaN(categoryId)) throw new BadRequestException('ID inválido');
+
+        return this.reportsService.deleteCategory(categoryId);
+        }
 
     // =============== ESTADÍSTICAS ===============
     @ApiOperation({ summary: 'Obtener estadísticas de reportes' })

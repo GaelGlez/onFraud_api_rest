@@ -1,20 +1,24 @@
 /* eslint-disable prettier/prettier */
-
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException, NotFoundException, BadRequestException } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
-import { sha256 } from "src/util/hash/hash.util";
 import { UpdateUserAdminDto, UpdateUserDto } from "./dto/users.dto";
 import { LoginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
-
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class UserService {
-    constructor(private readonly usersRepository: UsersRepository) {}s
+    constructor(private readonly usersRepository: UsersRepository) {}
+
+    private readonly SALT_ROUNDS = 12; // Puedes ajustar entre 10 y 14 según tu servidor
 
     // =============== CREAR USUARIO ===============
     async createUser(createUserDto: CreateUserDto) {
-        const hashed_password= sha256(createUserDto.password);
-        return this.usersRepository.createUser(createUserDto.email, createUserDto.full_name, hashed_password);
+        const hashedPassword = await bcrypt.hash(createUserDto.password, this.SALT_ROUNDS);
+        return this.usersRepository.createUser(
+            createUserDto.email,
+            createUserDto.full_name,
+            hashedPassword,
+        );
     }
 
     // =============== ENCONTRAR USUARIOS ===============
@@ -25,10 +29,9 @@ export class UserService {
     // =============== VALIDAR USUARIO (Login) ===============
     async validateUser(loginDto: LoginUserDto) {
         const user = await this.usersRepository.findUserByEmail(loginDto.email);
-        if (!user) {
-            return null;
-        }
-        const isValid = user.password_hash === sha256(loginDto.password);
+        if (!user) return null;
+
+        const isValid = await bcrypt.compare(loginDto.password, user.password_hash);
         return isValid ? user : null;
     }
 
@@ -42,8 +45,9 @@ export class UserService {
         const { email, full_name } = updateDto;
 
         if (!email && !full_name) {
-            throw new Error("No hay campos para actualizar");
+            throw new BadRequestException("No hay campos para actualizar");
         }
+
         return this.usersRepository.updateUser(userId, email, full_name);
     }
 
@@ -52,27 +56,38 @@ export class UserService {
         const { email, full_name, password } = updateDto;
 
         if (!email && !full_name && !password) {
-            throw new Error("No hay campos para actualizar");
+            throw new BadRequestException("No hay campos para actualizar");
         }
+
         let hashedPassword: string | undefined = undefined;
         if (password) {
-            hashedPassword = sha256(password);
+            hashedPassword = await bcrypt.hash(password, this.SALT_ROUNDS);
         }
+
         return this.usersRepository.updateUserAdmin(userId, email, full_name, hashedPassword);
     }
 
     // =============== ACTUALIZAR CONTRASEÑA ===============
-    async updatePassword(userId: number, updatePasswordDto: { oldPassword: string; newPassword: string; }) {
+    async updatePassword(
+        userId: number,
+        updatePasswordDto: { oldPassword: string; newPassword: string },
+    ) {
         const user = await this.usersRepository.findUserById(userId);
         if (!user) {
-            throw new Error("Usuario no encontrado");
+            throw new NotFoundException("Usuario no encontrado");
         }
-        const oldPasswordHash = sha256(updatePasswordDto.oldPassword);
-        if (user.password_hash !== oldPasswordHash) {
-            throw new Error("La contraseña antigua no coincide");
+
+        const isOldPasswordValid = await bcrypt.compare(
+            updatePasswordDto.oldPassword,
+            user.password_hash,
+        );
+
+        if (!isOldPasswordValid) {
+            throw new UnauthorizedException("La contraseña antigua no coincide");
         }
-        user.password_hash = sha256(updatePasswordDto.newPassword);
-        return this.usersRepository.updatePasswordUser(userId, user.password_hash);
+
+        const newHashedPassword = await bcrypt.hash(updatePasswordDto.newPassword, this.SALT_ROUNDS);
+        return this.usersRepository.updatePasswordUser(userId, newHashedPassword);
     }
 
     // =============== VALIDAR ADMIN (Login) ===============
@@ -80,17 +95,14 @@ export class UserService {
         const user = await this.usersRepository.findUserByEmail(loginDto.email);
         if (!user) return null;
 
-        const isValid = user.password_hash === sha256(loginDto.password);
-        if (!isValid) return null;
-
-        if (!user.role) return null;
+        const isValid = await bcrypt.compare(loginDto.password, user.password_hash);
+        if (!isValid || !user.role) return null;
 
         return user;
     }
-    
+
     // =============== ELIMINAR USUARIO ===============
     async deleteUser(userId: number): Promise<void> {
         await this.usersRepository.deleteUser(userId);
     }
-
 }

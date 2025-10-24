@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUrl, IsInt, IsArray, MinLength, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, IsInt, IsArray, MinLength, MaxLength, Length } from 'class-validator';
 
 export class CreateReportDto {
   @ApiProperty({
@@ -157,6 +157,7 @@ export class CategoryDTO {
   @ApiProperty({ example: 'Nuevo nombre de categoría' })
   @IsString()
   @IsNotEmpty()
+  @Length(1, 100)
   name: string;
 }
 
