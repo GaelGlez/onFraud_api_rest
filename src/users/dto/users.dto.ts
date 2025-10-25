@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class UpdateUserDto {
     @ApiProperty({
@@ -9,6 +9,7 @@ export class UpdateUserDto {
     })
     @IsOptional()
     @IsEmail({}, { message: 'Debe ser un email válido' })
+    @MaxLength(255, { message: 'El email no puede exceder los 255 caracteres.' })
     email?: string;
 
     @ApiProperty({
@@ -18,6 +19,9 @@ export class UpdateUserDto {
     })
     @IsOptional()
     @IsString({ message: 'Debe ser un string' })
+    @MinLength(5, { message: 'El nombre completo debe tener al menos 5 caracteres.' })
+    @MaxLength(100, { message: 'El nombre completo no puede exceder los 100 caracteres.' })
+    @Matches(/^[a-zA-ZÀ-ÿ\s]+$/, { message: "El nombre completo solo puede contener letras y espacios" })
     full_name?: string;
 }
 
@@ -28,6 +32,7 @@ export class UpdateUserAdminDto {
         description: 'Correo electrónico del usuario (opcional)',
     })
     @IsOptional()
+    @MaxLength(255, { message: 'El email no puede exceder los 255 caracteres.' })
     @IsEmail({}, { message: 'Debe ser un email válido' })
     email?: string;
 
@@ -38,6 +43,9 @@ export class UpdateUserAdminDto {
     })
     @IsOptional()
     @IsString({ message: 'Debe ser un string' })
+    @MinLength(5, { message: 'El nombre completo debe tener al menos 5 caracteres.' })
+    @MaxLength(100, { message: 'El nombre completo no puede exceder los 100 caracteres.' })
+    @Matches(/^[a-zA-ZÀ-ÿ\s]+$/, { message: "El nombre completo solo puede contener letras y espacios" })
     full_name?: string;
 
     @ApiProperty({
@@ -48,6 +56,8 @@ export class UpdateUserAdminDto {
     @IsOptional()
     @IsString({ message: 'Debe ser un string' })
     @MinLength(9, { message: 'La contraseña debe tener al menos 9 caracteres' })
+    @MaxLength(64, { message: 'La contraseña no puede exceder los 64 caracteres.' })
+    @Matches(/^(?=.*[A-Z])(?=.*\d).+$/, { message: "La contraseña debe contener al menos una mayúscula y un número" })
     password?: string;
 }
 
@@ -60,6 +70,8 @@ export class UpdatePasswordDto {
     })
     @IsString({ message: 'Debe ser un string' })
     @MinLength(9, { message: 'La contraseña debe tener al menos 9 caracteres' })
+    @MaxLength(64, { message: 'La contraseña no puede exceder los 64 caracteres.' })
+    @Matches(/^(?=.*[A-Z])(?=.*\d).+$/, { message: "La contraseña debe contener al menos una mayúscula y un número" })
     oldPassword: string;
 
     @ApiProperty({
@@ -69,6 +81,8 @@ export class UpdatePasswordDto {
     })
     @IsString({ message: 'Debe ser un string' })
     @MinLength(9, { message: 'La contraseña debe tener al menos 9 caracteres' })
+    @MaxLength(64, { message: 'La contraseña no puede exceder los 64 caracteres.' })
+    @Matches(/^(?=.*[A-Z])(?=.*\d).+$/, { message: "La contraseña debe contener al menos una mayúscula y un número" })
     newPassword: string;
 }
 
@@ -97,12 +111,14 @@ export class User {
     @ApiProperty({
         example: '$2b$10$abcdefghijklmnopqrstuv',
         description: 'Hash de la contraseña del usuario (encriptado con bcrypt)',
+        writeOnly: true
     })
     password_hash: string;
 
     @ApiProperty({
         example: '$2b$10$abcdefghijklmnopqrstuv',
         description: 'Salt utilizado para generar el hash de la contraseña',
+        writeOnly: true
     })
     salt: string;
 

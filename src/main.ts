@@ -26,7 +26,7 @@ async function bootstrap() {
           defaultSrc: ["'self'"],
           scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // necesario para Swagger UI
           styleSrc: ["'self'", "'unsafe-inline'"], // inline styles permitidos
-          imgSrc: ["'self'", "data:"],
+          imgSrc: ["'self'", "data:", "http://localhost:3000"],
           connectSrc: ["'self'", "ws://localhost:3000"], // si Next.js usa websocket o hot reload
           fontSrc: ["'self'"],
           objectSrc: ["'none'"],
@@ -37,6 +37,11 @@ async function bootstrap() {
       frameguard: { action: 'deny' }, // X-Frame-Options: DENY
     }),
   );
+
+  app.use((req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  });
 
   // Habilitar CORS
   app.enableCors({
@@ -72,8 +77,13 @@ async function bootstrap() {
   const doc = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs-onfraud', app, doc);
 
-  await app.listen(process.env.PORT ?? 4000);
-  console.log(`🚀 onFraud API running on http://localhost:${process.env.PORT ?? 4000}`);
+  const port = Number(process.env.PORT);
+  if (!port) {
+    throw new Error("PORT no está definido en variables de entorno");
+  }
+
+  await app.listen(port);
+  console.log(`🚀 onFraud API running on http://localhost:${port}`);
 }
 
 bootstrap();

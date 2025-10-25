@@ -212,12 +212,26 @@ export class ReportsRepository {
   }
 
   // =====  CATEGORÍAS DE REPORTES =====
-  async findAllCategories(): Promise<Categories[]> {
-    const [rows]: any = await this.db
-      .getPool()
-      .query('SELECT * FROM categories ORDER BY name ASC');
-    return rows;
-  }
+  async findAllCategories(): Promise<(Categories & { reportCount: number })[]> {
+    const [rows]: any = await this.db.getPool().query(`
+        SELECT 
+            c.id, 
+            c.name, 
+            COUNT(r.id) AS reportCount
+        FROM categories c
+        LEFT JOIN reports r ON r.category_id = c.id
+        GROUP BY c.id, c.name
+        ORDER BY c.name ASC
+    `);
+
+    // Asegurarnos de que reportCount sea number
+    return rows.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        reportCount: Number(row.reportCount),
+    }));
+}
+
 
   async createCategory(dto: CategoryDTO) {
     const [result]: any = await this.db.getPool().query(

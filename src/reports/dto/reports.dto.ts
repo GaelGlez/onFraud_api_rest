@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUrl, IsInt, IsArray, MinLength, MaxLength, Length } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, IsInt, IsArray, MinLength, MaxLength, Length, Matches } from 'class-validator';
 
 export class CreateReportDto {
   @ApiProperty({
@@ -20,6 +20,7 @@ export class CreateReportDto {
     required: true,
   })
   @IsInt({ message: 'El ID de la categoría debe ser un número entero.' })
+  @IsNotEmpty()
   category_id!: number;
 
   @ApiProperty({
@@ -38,6 +39,7 @@ export class CreateReportDto {
   })
   @IsOptional()
   @IsUrl({}, { message: 'Debe ser una URL válida.' })
+  @MaxLength(2083)
   url?: string;
 
   @ApiProperty({
@@ -63,53 +65,6 @@ export class CreateReportDto {
   @IsArray({ message: 'Evidences debe ser un arreglo de strings.' })
   @IsString({ each: true, message: 'Cada evidencia debe ser una cadena.' })
   evidences?: string[];
-}
-
-export class UpdateReportDto {
-  @ApiProperty({
-    example: 'Nueva oferta en Cancún',
-    required: false,
-    description: 'Título del reporte (opcional).',
-  })
-  @IsOptional()
-  @IsString({ message: 'El título debe ser texto.' })
-  title?: string;
-
-  @ApiProperty({
-    example: 'El sitio ha cambiado de nombre, pero sigue siendo fraudulento.',
-    required: false,
-    description: 'Descripción actualizada del reporte (opcional).',
-  })
-  @IsOptional()
-  @IsString({ message: 'La descripción debe ser texto.' })
-  description?: string;
-
-  @ApiProperty({
-    example: 'https://comprasexpress-new.com',
-    required: false,
-    description: 'URL actualizada del sitio fraudulento (opcional).',
-  })
-  @IsOptional()
-  @IsUrl({}, { message: 'Debe ser una URL válida.' })
-  url?: string;
-
-  @ApiProperty({
-    example: 2,
-    required: false,
-    description: 'Nuevo ID de categoría (opcional).',
-  })
-  @IsOptional()
-  @IsInt({ message: 'Debe ser un número entero.' })
-  category_id?: number;
-
-  @ApiProperty({
-    example: 1,
-    required: false,
-    description: 'Nuevo ID de estado (opcional).',
-  })
-  @IsOptional()
-  @IsInt({ message: 'Debe ser un número entero.' })
-  status_id?: number;
 }
 
 export class Report {
@@ -157,7 +112,8 @@ export class CategoryDTO {
   @ApiProperty({ example: 'Nuevo nombre de categoría' })
   @IsString()
   @IsNotEmpty()
-  @Length(1, 100)
+  @Length(4, 50)
+  @Matches(/^[a-zA-ZÀ-ÿ\s]+$/, { message: "El nombre completo solo puede contener letras y espacios" })
   name: string;
 }
 

@@ -163,7 +163,7 @@ export class ReportsService {
   }
 
     // ===== CATEGORÍAS =====
-  async findAllCategories(): Promise<Categories[]> {
+  async findAllCategories(): Promise<(Categories & { reportCount: number })[]> {
     return this.reportsRepository.findAllCategories();
   }
 
