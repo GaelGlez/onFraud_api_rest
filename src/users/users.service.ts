@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, UnauthorizedException, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { UpdateUserAdminDto, UpdateUserDto } from "./dto/users.dto";
 import { LoginUserDto, CreateUserDto } from "src/auth/dto/auth.dto";
@@ -9,17 +9,19 @@ import * as bcrypt from "bcrypt";
 export class UserService {
     constructor(private readonly usersRepository: UsersRepository) {}
 
-    private readonly SALT_ROUNDS = 12; // Puedes ajustar entre 10 y 14 según tu servidor
+    private readonly SALT_ROUNDS = 12; 
 
     // =============== CREAR USUARIO ===============
     async createUser(createUserDto: CreateUserDto) {
+        const existingUser = await this.usersRepository.findUserByEmail(createUserDto.email);
+        if (existingUser) {
+            throw new ConflictException('El email ya está registrado');
+        }
+
         const hashedPassword = await bcrypt.hash(createUserDto.password, this.SALT_ROUNDS);
-        return this.usersRepository.createUser(
-            createUserDto.email,
-            createUserDto.full_name,
-            hashedPassword,
-        );
+        return this.usersRepository.createUser(createUserDto.email, createUserDto.full_name, hashedPassword);
     }
+
 
     // =============== ENCONTRAR USUARIOS ===============
     async findUserById(id: number) {
@@ -29,10 +31,16 @@ export class UserService {
     // =============== VALIDAR USUARIO (Login) ===============
     async validateUser(loginDto: LoginUserDto) {
         const user = await this.usersRepository.findUserByEmail(loginDto.email);
-        if (!user) return null;
+        if (!user) {
+            throw new UnauthorizedException('El correo electrónico no está registrado');
+        }
 
         const isValid = await bcrypt.compare(loginDto.password, user.password_hash);
-        return isValid ? user : null;
+        if (!isValid) {
+            throw new UnauthorizedException('La contraseña es incorrecta');
+        }
+
+        return user;
     }
 
     // =============== ENCONTRAR TODOS LOS USUARIOS ===============

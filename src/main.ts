@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'node:path';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import helmet from 'helmet';
 
@@ -61,8 +61,23 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      exceptionFactory: (errors) => {
+        const formattedErrors = errors.map((err) => ({
+          field: err.property,
+          errors: err.constraints ? Object.values(err.constraints) : [],
+        }));
+        return new HttpException(
+          {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: 'Datos inválidos en la solicitud',
+            errors: formattedErrors,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      },
     }),
   );
+
 
   // Manejo global de errores
   app.useGlobalFilters(new AllExceptionsFilter());
